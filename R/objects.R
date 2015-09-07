@@ -2,31 +2,43 @@
 #This creates the object with some routine checks
 #This also gives us the point estimates and can be used
 #with some summary and plot functions
-
 ATE<- function(Y, Ti, X, theta=0,
                ATT = FALSE, verbose = FALSE,
                max.iter = 100, tol = 1e-10, initial.values = NULL,
                backtrack.alpha = 0.3, backtrack.beta = 0.5){
+  #The alpha and beta values for backtracking line search
   bt.a<- backtrack.alpha
   bt.b<- backtrack.beta
 
+  #J is the number treatment arms
+  J<- length(unique(Ti))
+  #The totoal length of the parameter vector
+  #Recall: Using the notation of the Package Vignette we
+  #have u_K(X) = cbind(1,X)
+  K<- ncol(X)+1
+
+  #In some cases if we have a data.frame we need to
+  #convert it into a numeric matrix
+  if(class(X)== "data.frame"){
+    X<- as.matrix(X)
+  }
+
+  #Take care of the case of a single covariate
   if(is.vector(X)){
     X<- matrix(X, ncol = 1, nrow = length(X))
     warning("Data matrix 'X' is a vector, will be treated as n x 1 matrix")
   }
+
+  #Some simple checks before running the main functions
   if(nrow(X)!=length(Y)){
     stop("Dimensions of covariates and response do not match")
   }
-
-  J<- length(unique(Ti))
   if(J==1){
     stop("There must be atleast two treatment arms")
   }
-
   if(!all(0:(J-1) == sort(unique(Ti)))){
     stop("The treatment levels must be labelled 0,1,2,...")
   }
-
   if(!is.numeric(theta)){
     stop("theta must be a real number")
   }
@@ -34,7 +46,8 @@ ATE<- function(Y, Ti, X, theta=0,
     stop("Treatment effect on the treated cannot be calculated for multiple treatment groups.")
   }
 
-  K<- ncol(X)+1
+  #If the inital estimates is not provided we generate
+  #simple initial parameters
   if(is.null(initial.values)){
     if(ATT){
       initial.values<- numeric(K)
@@ -42,10 +55,11 @@ ATE<- function(Y, Ti, X, theta=0,
       initial.values<- matrix(0, ncol = K, nrow = J )
     }
   }
-
+  #For ATT there is only one BFGS applied
   if(ATT & !is.vector(initial.values)){
-    stop("For ATT we only need one vector of initial values for newton raphson")
+    stop("For ATT we only need one vector of initial values for BFGS")
   }
+  #In all other cases this has to be a matrix.
   if(!ATT){
     if( !is.matrix(initial.values) ){
       stop("Initial values must be a matrix")
@@ -55,39 +69,34 @@ ATE<- function(Y, Ti, X, theta=0,
     }
   }
 
-
-  #Now we determine which category of the problem we are in
+  #Now we specify the category of the problem
+  #The simple case with binary treatment
   gp<- "simple"
+
+  #The case of average treatment effect on the treated
   if(ATT) gp<- "ATT"
+
+  #The case of Multiple treatment arms
   if(J>2) gp<- "MT"
+
+  #Obtain the estimates for whatever the case may be
   if(gp == "simple"){
     ini1<- initial.values[1,]
     ini2<- initial.values[2,]
     est<- get.est.simple(ini1,ini2, X, Y, Ti, theta, max.iter ,
                               tol,  bt.a , bt.b ,verbose)
-#     est<- get.est.simple(ini1, ini2, X, Y, Ti, rho, rho1, rho2,
-#                          FUNu, max.iter,
-#                          tol, backtrack, bt.a, bt.b,
-#                          verbose = verbose, ...)
 
   }else if(gp == "ATT"){
     ini2<- initial.values
     est<- get.est.ATT(ini2, X, Y, Ti, theta, max.iter,
                            tol,  bt.a , bt.b , verbose )
-#     est<- get.est.ATT(ini2, X, Y, Ti, rho, rho1, rho2,
-#                       FUNu, max.iter,
-#                       tol, backtrack, bt.a , bt.b ,
-#                       verbose = verbose, ...)
   }else if(gp == "MT"){
     est<- get.est.MT(initial.values, X, Y, Ti, theta, max.iter,
                           tol,  bt.a , bt.b ,
                           verbose)
-#     est<- get.est.MT(initial.values, X, Y, Ti, rho, rho1, rho2,
-#                      FUNu, max.iter,
-#                      tol, backtrack, bt.a, bt.b,
-#                      verbose, ...)
   }
 
+  #Begin building the "ATE" object which is a list
   res<- est
   res$X<- X
   res$Y<- Y
@@ -96,11 +105,17 @@ ATE<- function(Y, Ti, X, theta=0,
   res$gp<- gp
   res$J<- J
   res$K<- K
+
   if(verbose){
     cat("\nEstimating Variance")
   }
+
+  #Estimate the variance covariance matrix of
+  #E[Y(1)] and E[Y(0)]
   res$vcov<- estimate_variance(res)
   res$call<- match.call()
+
+  #Rename some of the elements of the list and organize the output object
   if(gp=="simple"){
     est<- c(res$Y1,res$Y0,res$tau)
     names(est)<- c("E[Y(1)]", "E[Y(0)]", "ATE")
@@ -122,10 +137,13 @@ ATE<- function(Y, Ti, X, theta=0,
     res$Yj.hat<- NULL
   }
 
+  #Define the class ATE
   class(res)<- "ATE"
   return(res)
 }
 
+#S3 print method for class ATE
+#The function prints the point estimates and
 print.ATE<- function(x, ...){
   object<- x
   if(object$gp == "simple"){
@@ -137,32 +155,44 @@ print.ATE<- function(x, ...){
   }else if(object$gp == "ATT"){
     cat("Call:\n")
     print(object$call)
-    cat("\nThe analysis was completed for a simple study design with binary treatment.\n")
+    cat("\nThe analysis was completed for a binary treatment for estimating treatment effect on the treated.\n")
     cat("\nPoint Estimates:\n")
     print(object$est)
   }else{
     cat("Call:\n")
     print(object$call)
-    cat("\nThe analysis was completed for a simple study design with binary treatment.\n")
+    cat("\nThe analysis was completed for a study design with multiple treatment arms.\n")
     cat("\nPoint Estimates:\n")
     print(object$est)
   }
 }
 
 
+#S3 summary method for ATE
+#THis function calculates the SE, Z-statistic and
+#confidence intervals and P values
 summary.ATE<- function(object, ...){
+
+  #For binary treatment we calculate the variance of
+  # EY(1) - EY(0). Using the formula var(a-b) = var(a)+var(b)-2cov(a,b)
   if(object$gp== "simple" || object$gp== "ATT"){
     var.tau<- object$vcov[1,1]+object$vcov[2,2]-
       2*object$vcov[1,2]
     se<- c(sqrt(diag(object$vcov)), sqrt(var.tau))
-  }else{
+  }else{#The case of multiple treatments
+    #Now we do not have a specific variable like EY(1)-EY(0)
+    #So we just obtain the SE for EY(0), EY(1), EY(2),...
     se<- sqrt(diag(object$vcov))
   }
+  #Obtain confidence intervals
   Ci.l<- object$est+se*qnorm(0.025)
   Ci.u<- object$est+se*qnorm(0.975)
 
+  #Evaluate the Z-statistic and P-value
   z.stat<- object$est/se
   p.values<- 2*pnorm(-abs(z.stat))
+  #Create a coefficient matrix which we can print later
+  #to make it look like the out put of summary for lm/glm etc.
   coef<- cbind(Estimate = object$est,
                StdErr = se,
                "95%.Lower" = Ci.l,
@@ -188,6 +218,9 @@ summary.ATE<- function(object, ...){
 
 }
 
+#A Print method for "summary.ATE"
+#uses the coefficient matrix to give us print statements like
+#the summary function of lm/glm.
 print.summary.ATE <- function(x, ...){
   cat("Call:\n")
   print(x$call)
@@ -195,9 +228,9 @@ print.summary.ATE <- function(x, ...){
   printCoefmat(x$Estimate, P.values = TRUE, has.Pvalue=TRUE)
 }
 
-#####################################################################
 
-
+#A simple function to evaluate the emiprical CDF
+#This function allows us to calculate a weighted emiprical CDF too.
 my.ecdf<- function(t,x, weights = NULL){
   if(is.null(weights)){
     sum(1*(x <= t))/length(x)
@@ -206,10 +239,17 @@ my.ecdf<- function(t,x, weights = NULL){
   }
 }
 
+#The S3 plot function for ATE
+#This function plots the empirical CDF for
+#all the covariates for the different tretment groups
+#And the weighted eCDF after covariate balancing
 plot.ATE<- function(x, ...){
   object<- x
   Ti<- object$Ti
+  ##################Case 1: Simple binary treatment###################
+
   if(object$gp == "simple"){
+    #Obtain weights
     w.p<- object$weights.p[Ti==1]
     w.q<- object$weights.q[Ti==0]
 
