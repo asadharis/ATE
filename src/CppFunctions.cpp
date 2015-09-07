@@ -138,19 +138,26 @@ arma::rowvec cpp_derv_obj(NumericVector lam,NumericMatrix u, NumericVector ubar,
 //yk is the difference f'(x_{k+1}) - f'(x_{k})
 //where x_k is the optimization variable and f is the objective function
 arma::mat cpp_update_hessianInv(arma::mat oldInv, arma::vec sk, arma::vec yk){
+  //We evaluate some scalars first since we use them in multiple locations
+  // of the updating step
   double scal1 = as_scalar(trans(yk)*oldInv*yk);
   double scal2 = as_scalar(trans(sk)*yk);
   arma::mat mat1 = (oldInv*yk)*trans(sk);
 
+  //The BFGS update step here:
+  //Formulation from https://en.wikipedia.org/wiki/Broyden–Fletcher–Goldfarb–Shanno_algorithm
   return oldInv + ((scal1+scal2)/pow(scal2,2))*sk*trans(sk) - (mat1 + trans(mat1))/scal2;
 }
 
 
 // [[Rcpp::export]]
+//A simple backtracking lin search
+//This formulation/notation is taken from Algorithm 9.2 of
+//Boyd, Stephen, and Lieven Vandenberghe. Convex optimization. 2004.
 double cpp_backtrack(double alpha,double beta, NumericVector x_val,
                      NumericVector del_x,NumericVector nabla_f,
                      NumericMatrix u, NumericVector ubar, arma::vec Ti,
-                       double theta){
+                    double theta){
 
   int N = u.nrow();
   arma::rowvec nablaf(nabla_f.begin(), nabla_f.size(), false);
@@ -159,30 +166,36 @@ double cpp_backtrack(double alpha,double beta, NumericVector x_val,
   arma::mat umat(u.begin(), N , u.ncol(), false);
   arma::rowvec u_bar(ubar.begin(), ubar.size(), false);
 
-
+  //Begin with an initial step size of 1
   double step = 1.0;
 
+  //Initialize some quantities which do not change
   double f_x = cpp_obj(x_val, u, ubar, Ti,theta);
   double df_t_dx =  as_scalar(nablaf*delx);
 
+  //main loop for the algoritm to find an appropriate step size
+  //Loop until the objective function of the new proposed step is sufficiently small
   while(cpp_obj(x_val+step*del_x,u,ubar,Ti,theta) > f_x+alpha*step*df_t_dx ){
     step = beta*step;
   }
   return step;
-
 }
 
 // [[Rcpp::export]]
+//The main function for obtaining the point estimates.
+//This function implements a BFGS algorithm
 List cpp_quasi_newt(NumericVector ini,NumericMatrix u, NumericVector ubar,
                     arma::vec Ti, double theta, double alpha, double beta,
                     int max_iter, double tol){
+
+  //Initialize some variables
   int p = ini.size();
   int N = u.nrow();
   arma::mat umat(u.begin(), N , u.ncol(), false);
 
+  //Initialize variables which will be used in the main loop
   arma::vec current_est(ini.begin(), ini.size(), false);
   arma::vec new_est;
-
 
   arma::vec current_derv, new_derv;
   arma::vec current_direction, new_direction;
@@ -195,25 +208,32 @@ List cpp_quasi_newt(NumericVector ini,NumericMatrix u, NumericVector ubar,
   arma::vec yk, sk;
 
   for(int i=1; i<= max_iter; i++){
+    //Calculate the current derivative of the objective function and direction
     current_derv = trans( cpp_derv_obj(as<NumericVector>(wrap(current_est)), u,ubar,Ti,theta) );
     current_direction = -current_InvHessian*current_derv;
 
+    //Evaluate the objective function as the current point
+    //We use this later to check if the objective is unbounded
     objValue = cpp_obj(as<NumericVector>(wrap(current_est)), u,  ubar, Ti,  theta);
-    //cout<< objValue << "\n";
+
+    //Calculate the Stepsize using the backtracking line search algorithm
     stepSize = cpp_backtrack(alpha,beta, as<NumericVector>(wrap(current_est)),
                   as<NumericVector>(wrap(current_direction)),
                   as<NumericVector>(wrap(current_derv)),
                   u,ubar, Ti,theta);
-    //cout<< stepSize << "\n";
-    new_est = current_est + stepSize*current_direction;
-    //cout<< new_est;
 
+    //Calulate the new estimate
+    new_est = current_est + stepSize*current_direction;
+
+    //Update the estimate for the inverse hessian using the BFGS update
     new_derv = trans(cpp_derv_obj(as<NumericVector>(wrap(new_est)), u,ubar,Ti,theta));
     yk = new_derv - current_derv;
     sk = new_est - current_est;
     new_InvHessian = cpp_update_hessianInv(current_InvHessian, sk, yk);
 
-
+    //For some cases, say theta = -1, the objective function can be unbounded
+    //in which case the alorithm will never converge.
+    //In this case we throw a warning suggesting using a different theta value
     if(objValue< -1e+30){
       Function warning("warning");
       warning("The objective function is unbounded, a different theta might be needed.");
@@ -225,8 +245,12 @@ List cpp_quasi_newt(NumericVector ini,NumericMatrix u, NumericVector ubar,
                           Named("Conv") = false);
     }
 
-    //cout<< sum(square(new_derv))<< "\n";
+    //Check convergence by checking the first derivative
+    //Since the derivative would be 0 at a critical point we
+    //calculate the l2 norm to check convergence
     if(sum(square(new_derv)) < tol ){
+      //If the stopping condition is met
+      //Calculate the weights used for getting our final estimate
       arma::vec weights = zeros<vec>(N);
       arma::uvec indx = find(Ti == 1);
       arma::vec lambda(new_est.begin(), new_est.size(), false);
@@ -234,14 +258,15 @@ List cpp_quasi_newt(NumericVector ini,NumericMatrix u, NumericVector ubar,
       return List::create(Named("res") = new_est, Named("weights") = weights,
                           Named("Conv") = true);
     }else{
+      //If stopping condition is not met update the current estimate and
+      //current InvHessian
       current_est = new_est;
       current_InvHessian = new_InvHessian;
-
     }
-
-
-
   }
+
+  //If algotihm runs for maximum number of iterations
+  //return the last result and state convergence status is false
   arma::vec weights = zeros<vec>(N);
   arma::uvec indx = find(Ti == 1);
   arma::vec lambda(new_est.begin(), new_est.size(), false);
@@ -250,51 +275,3 @@ List cpp_quasi_newt(NumericVector ini,NumericMatrix u, NumericVector ubar,
   return List::create(Named("res") = new_est, Named("weights") = weights,
                       Named("Conv") = false);
 }
-
-
-
-
-// // [[Rcpp::export]]
-// arma::mat get_gk_simple(NumericMatrix u, arma::vec Y, arma::vec Ti,
-//                         arma::vec lam , arma::vec beta,
-//                         double tau1, double tau0, double theta){
-//   int N = Y.size();
-//   arma::mat umat(u.begin(), N , u.ncol(), false);
-//   arma::mat ucopy1(u.begin(), N , u.ncol(), true);
-//   arma::mat ucopy2(u.begin(), N , u.ncol(), true);
-//
-//   arma::vec temp1 = Ti % cpp_dcr_rho(umat*lam, theta);
-//   ucopy1.each_col() %= temp1;
-//   arma::mat gk1 = ucopy1 - umat;
-//
-//   arma::vec temp2 = (1-Ti) % cpp_dcr_rho(umat*beta, theta);
-//   ucopy2.each_col() %= temp2;
-//   arma::mat gk2 = ucopy2 - umat;
-//
-//   arma::vec gk3 = (Ti % Y)%cpp_dcr_rho(umat*lam,theta) - tau1;
-//   arma::vec gk4 = ((1-Ti) % Y)%cpp_dcr_rho(umat*beta,theta) - tau0;
-//   return join_rows(join_rows(join_rows(gk1,gk2),gk3),gk4);
-// }
-//
-
-
-
-// // [[Rcpp::export]]
-// arma::mat cpp_derv2_obj(NumericVector lam,NumericMatrix u, NumericMatrix ucopy, NumericVector ubar,
-//                           arma::vec Ti, double theta){
-//   int N = u.nrow();
-//   arma::mat umat(u.begin(), N , u.ncol(), false);
-//   //I create a copy here which I need to use later.
-//   //uses extra memory but I don't see a way around it yet.
-//   arma::mat umatCopy(ucopy.begin(), N , ucopy.ncol(), false);
-//
-//   arma::colvec lambda(lam.begin(), lam.size(), false);
-//   arma::rowvec u_bar(ubar.begin(), ubar.size(), false);
-//
-//   arma::vec lam_t_u = umat*lambda;
-//   arma::rowvec temp = trans(Ti % cpp_ddcr_rho( lam_t_u, theta));
-//   temp.elem(find_nonfinite(temp)).fill(0);
-//
-//   umatCopy.each_col() %= trans(temp);
-//   return -(trans(umat)*umatCopy)/N;
-// }
