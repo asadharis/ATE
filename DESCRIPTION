@@ -1,0 +1,12 @@
+Package: ATE
+Type: Package
+Title: Inference for Average Treatment Effects using Covariate Balancing
+Version: 0.3.0
+Date: 2015-02-16
+Author: Asad Haris <aharis@uw.edu> and Gary Chan <kcgchan@uw.edu>
+Maintainer: Asad Haris <aharis@uw.edu>
+Description: Nonparametric estimation and inference for average treatment effects based on covariate balancing.
+License: GPL (>= 2)
+NeedsCompilation: yes
+Imports: Matrix, Rcpp (>= 0.12.0)
+LinkingTo: Rcpp, RcppArmadillo
