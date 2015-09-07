@@ -1,33 +1,44 @@
 // [[Rcpp::depends(RcppArmadillo)]]
-#include <RcppArmadillo.h>
+#include <RcppArmadillo.h> //Headers for including Rcpp and Armadillo
 #include <Rcpp.h>
 using namespace arma;
 using namespace Rcpp;
 
-
 // [[Rcpp::export]]
+//A function for evaluating the Cressie Read family
+//See documentation for the exact form of functions
+//In package Vignette this function is used for the function \rho
+//Note: In this package we use the functions with 1-theta as opposed
+// to 1+theta.
 arma::vec cpp_cr_rho(arma::vec x, double theta) {
+  //Create a copy of the vector
   arma::vec xv(x.size());
 
+
   if(theta == 0){
-    xv = -exp(-x);
+    xv = -exp(-x); //The limiting case of theta = 0. Easy to calculate
   }else if(theta == -1){
-    xv = log(1+x);
+    xv = log(1+x);// The limiting case of theta = -1, use L'Hopital's rule
   }else{
+    // The function we use for all other values of theta
     xv = -1*pow((1-theta*x), 1+1/theta);
     xv = xv/(1+theta);
   }
 
+  //For some cases particularly theta == -1, the function is
+  //not defined for the entire real line. In order to maintain
+  //concavity of the function we assign the value -Inf to regions
+  //outside the domain of the function.
+  //This is a standard trick in convex optimization
   xv.elem(find_nonfinite(xv)).fill(-1*datum::inf);
-
   return xv;
 }
 
 
 // [[Rcpp::export]]
+//The first derivative of the above function evaluated for a vector x
 arma::vec cpp_dcr_rho(arma::vec x, double theta) {
   arma::vec xv(x.size());
-
 
   if(theta == 0){
     xv = exp(-x);
@@ -44,12 +55,9 @@ arma::vec cpp_dcr_rho(arma::vec x, double theta) {
 
 
 // [[Rcpp::export]]
+//The second derivative of the above function evaluated for a vector x
 arma::vec cpp_ddcr_rho(arma::vec x, double theta) {
   arma::vec xv(x.size());
-
-  //double intpart;
-
-  //return modf(theta, &intpart) == 0.0;
 
   if(theta == 0){
     xv = -exp(-x);
@@ -64,40 +72,71 @@ arma::vec cpp_ddcr_rho(arma::vec x, double theta) {
   return xv;
 }
 
+//////////////////////////////////////////////////////////
 
 // [[Rcpp::export]]
+//The main objective function which we need to optimize over.
+//See package Vignette for the objective functions/optimization problem
+//
+//Note that R is pretty flexible with making the conversions between R objects
+// and Rcpp objects. E.g. a vector in R can be used for the following inputs:
+// NumericVector arma::vec arma::colvec arma::rowvec
 double cpp_obj(NumericVector lam, NumericMatrix u, NumericVector ubar,
                arma::vec Ti, double theta){
 
+  //Convert some Rcpp objects into armadillo objects
+  //The false allows us to do this quickly and withou alloting
+  //extra memory. HOWEVER, since this just assigns a pointer
+  //making changes to umat will also change u
   arma::mat umat(u.begin(), u.nrow() , u.ncol(), false);
   arma::colvec lambda(lam.begin(), lam.size(), false);
   arma::rowvec u_bar(ubar.begin(), ubar.size(), false);
 
+  //This creates a vector where the i-th term is
+  // \lambda^T u_K(X_i)
   arma::vec lam_t_u = umat*lambda;
   double lam_t_ubar = as_scalar(u_bar*lambda);
 
+  // Return the value of the objective function.
+  //Omit any NA terms caused by Ti==0 and cpp_cr_rho( lam_t_u, theta) == -Inf
+  //as<>wrap() is needed to use the na_omit sugar function since it is an Rcpp
+  //function and not available in RcppAramdillo
+  // The operator % is the element wise /Schur product
   return -mean(na_omit(as<NumericVector>(wrap(Ti % cpp_cr_rho( lam_t_u, theta))))) + lam_t_ubar;
 }
 
 
+
 // [[Rcpp::export]]
+//The first derivative of the above objective function
+//This function returns a row vector of size K where K = ncol(u)
 arma::rowvec cpp_derv_obj(NumericVector lam,NumericMatrix u, NumericVector ubar,
                     arma::vec Ti, double theta){
+  //Initialize the vectors
+  //row vs. col vec is declared for computational ease only
+  //to allow for proper matrix operations
   int N = u.nrow();
   arma::mat umat(u.begin(), N , u.ncol(), false);
   arma::colvec lambda(lam.begin(), lam.size(), false);
   arma::rowvec u_bar(ubar.begin(), ubar.size(), false);
 
+  //Same way as before we create a vector for the terms
+  // \lambda^T u_K(X_i)
   arma::vec lam_t_u = umat*lambda;
   arma::rowvec temp = trans(Ti % cpp_dcr_rho( lam_t_u, theta));
   temp.elem(find_nonfinite(temp)).fill(0);
 
-
+  //Return derivative
   return u_bar-( temp*umat)/N;
 }
 
 
 // [[Rcpp::export]]
+//This function gives us a one-step update for the BFGS algorithm
+//oldInv is the current "Approximate Inverse Hessian"
+//sk is the difference x_{k+1} - x_{k}
+//yk is the difference f'(x_{k+1}) - f'(x_{k})
+//where x_k is the optimization variable and f is the objective function
 arma::mat cpp_update_hessianInv(arma::mat oldInv, arma::vec sk, arma::vec yk){
   double scal1 = as_scalar(trans(yk)*oldInv*yk);
   double scal2 = as_scalar(trans(sk)*yk);

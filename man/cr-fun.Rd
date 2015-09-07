@@ -29,6 +29,9 @@ This set of functions can be used for the main \code{\link{ATE}} function for th
 \deqn{\rho(x) = -(1+\theta x)^{(\theta+1)/\theta}/(\theta+1) ,}
 where \eqn{\theta} is scalar.  The expression is interpreted as limits for \eqn{\theta = 0} or  \eqn{\theta = -1} (see Newey and Smith (2004)).
 
+For this package we use the modified version
+\deqn{\rho(x) = -(1-\theta x)^{(\theta+1)/\theta}/(\theta+1) ,}
+which led to better performance based on empirical simulations.
 }
 \value{
 The output of the real values function for a given parameter \eqn{\theta}{\theta}.
