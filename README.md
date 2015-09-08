@@ -5,6 +5,13 @@ treatment effects for observational data. The package provides point estimates f
 effects, average treatment effect on the treated and can also handle the case of multiple treatments.
 The package also allows inference by consistent variance estimates.
 
+#####Requirements
+- `R (>=3.2.0)`
+- `Rcpp (>=0.12.0)`
+- `RcppArmadillo`
+- `Matrix`
+
+
 -------------------------------------------------------------------------
 
 ##Key Features
