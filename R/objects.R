@@ -246,11 +246,11 @@ my.ecdf<- function(t,x, weights = NULL){
 plot.ATE<- function(x, ...){
   object<- x
   Ti<- object$Ti
+
   ##################Case 1: Simple binary treatment###################
 
-  if(object$gp == "simple"|| object$gp == "ATT"){
+  if(object$gp == "simple"){
     #Obtain weights
-    ATT<- object$gp == "ATT"
     w.p<- object$weights.p[Ti==1]
     w.q<- object$weights.q[Ti==0]
 
@@ -318,59 +318,6 @@ plot.ATE<- function(x, ...){
     par(ask = FALSE)
     #Second, for average treatment effect on the treated
     #We only balance on group in this case
-  }else if(object$gp == "ATT"){
-    #Obatin  the weights for our object
-    w.q<- object$weights.q[Ti==0]
-
-    #Again, obtain/set covariate names
-    names<- colnames(object$X)
-    if(is.null(names)){
-      p<- ncol(object$X)
-      names<- paste("X",1:p,sep = "")
-    }
-
-    x1<- object$X[Ti==1,]
-    x0<- object$X[Ti==0,]
-    for(i in 1:ncol(x1)){
-      if(i==2) par(ask = TRUE)
-
-      if(length(unique(object$X[,i])) == 2){
-        Treatment<- x1[,i]
-        Placebo<- x0[,i]
-        plot(c(0.5,1,2,2.5), c(2,mean(Treatment), mean(Placebo),2), pch = 16, cex = 1.5,
-             ylim = c(0,1), ylab = "Mean of group", xlab = "",col = c("blue","red"),
-             main = "Unweighted", xaxt = "n")
-        axis(side = 1, at = c(1,2), labels = c("Treatment", "Control") )
-        abline(h = mean(x1[,i]), lty = 2)
-
-        new_control<- sum(w.q*Placebo)
-        plot(c(0.5,1,2,2.5), c(2, mean(Treatment), new_control,2), pch = 16, cex = 1.5,
-             ylim = c(0,1), ylab = "Mean of group", xlab = "",col = c("blue","red"),
-             main = "Weighted", xaxt = "n")
-        axis(side = 1, at = c(1,2), labels = c("Treatment", "Control") )
-        abline(h = mean(x1[,i]), lty = 2)
-
-      }else{
-        rng<- range(c(x1[,i],x0[,i]))
-        my.seq<- seq(rng[1],rng[2],length = 100)
-        temp1<- sapply(my.seq, my.ecdf,x = x1[,i])
-        temp0<- sapply(my.seq, my.ecdf,x = x0[,i])
-        par(mfrow = c(1,2))
-        plot(my.seq,temp1,cex = 0.4,pch = 16,type = "l",lty = 1,col = "red",
-             xlab = names[i],ylab = "emperical CDF",main = "Unweighted emperical CDF")
-        lines(my.seq, temp0, cex = 0.4, pch = 16, lty = 2,col = "blue")
-        legend("bottomright", c("Treatment", "Control"), lty = c(1,2), col = c("red", "blue"))
-
-        temp1<- sapply(my.seq, my.ecdf,x = x1[,i])
-        temp0<- sapply(my.seq, my.ecdf,x = x0[,i], weights = w.q)
-        plot(my.seq,temp1,cex = 0.4,pch = 16,type = "l",lty = 1,col = "red",
-             xlab = names[i],ylab = "emperical CDF",main = "Weighted emperical CDF")
-        lines(my.seq, temp0, cex = 0.4, pch = 16, lty = 2,col = "blue")
-      }
-
-    }
-    par(ask = FALSE)
-
   }else{
 
     wgt <- object$weights.mat
