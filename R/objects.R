@@ -247,17 +247,19 @@ plot.ATE<- function(x, ...){
   object<- x
   Ti<- object$Ti
   ##################Case 1: Simple binary treatment###################
-
+  
   if(object$gp == "simple"){
     #Obtain weights
     w.p<- object$weights.p[Ti==1]
     w.q<- object$weights.q[Ti==0]
-
+    
+    #Check if covariates are named
     names<- colnames(object$X)
     if(is.null(names)){
       p<- ncol(object$X)
-      names<- paste("X",1:p,sep = "")
+      names<- paste("X",1:p,sep = "") # Other wise use a default name X1,X2,...
     }
+    
     x1<- as.matrix(object$X[Ti==1,])
     x0<- as.matrix(object$X[Ti==0,])
     for(i in 1:ncol(x1)){
