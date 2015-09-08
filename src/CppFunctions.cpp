@@ -1,15 +1,15 @@
 // [[Rcpp::depends(RcppArmadillo)]]
-#include <RcppArmadillo.h> //Headers for including Rcpp and Armadillo
+#include <RcppArmadillo.h>
 #include <Rcpp.h>
 using namespace arma;
 using namespace Rcpp;
 
-// [[Rcpp::export]]
 //A function for evaluating the Cressie Read family
 //See documentation for the exact form of functions
 //In package Vignette this function is used for the function \rho
 //Note: In this package we use the functions with 1-theta as opposed
 // to 1+theta.
+// [[Rcpp::export]]
 arma::vec cpp_cr_rho(arma::vec x, double theta) {
   //Create a copy of the vector
   arma::vec xv(x.size());
@@ -34,9 +34,8 @@ arma::vec cpp_cr_rho(arma::vec x, double theta) {
   return xv;
 }
 
-
-// [[Rcpp::export]]
 //The first derivative of the above function evaluated for a vector x
+// [[Rcpp::export]]
 arma::vec cpp_dcr_rho(arma::vec x, double theta) {
   arma::vec xv(x.size());
 
@@ -53,9 +52,8 @@ arma::vec cpp_dcr_rho(arma::vec x, double theta) {
   return xv;
 }
 
-
-// [[Rcpp::export]]
 //The second derivative of the above function evaluated for a vector x
+// [[Rcpp::export]]
 arma::vec cpp_ddcr_rho(arma::vec x, double theta) {
   arma::vec xv(x.size());
 
@@ -74,13 +72,13 @@ arma::vec cpp_ddcr_rho(arma::vec x, double theta) {
 
 //////////////////////////////////////////////////////////
 
-// [[Rcpp::export]]
 //The main objective function which we need to optimize over.
 //See package Vignette for the objective functions/optimization problem
 //
 //Note that R is pretty flexible with making the conversions between R objects
 // and Rcpp objects. E.g. a vector in R can be used for the following inputs:
 // NumericVector arma::vec arma::colvec arma::rowvec
+// [[Rcpp::export]]
 double cpp_obj(NumericVector lam, NumericMatrix u, NumericVector ubar,
                arma::vec Ti, double theta){
 
@@ -106,10 +104,9 @@ double cpp_obj(NumericVector lam, NumericMatrix u, NumericVector ubar,
 }
 
 
-
-// [[Rcpp::export]]
 //The first derivative of the above objective function
 //This function returns a row vector of size K where K = ncol(u)
+// [[Rcpp::export]]
 arma::rowvec cpp_derv_obj(NumericVector lam,NumericMatrix u, NumericVector ubar,
                     arma::vec Ti, double theta){
   //Initialize the vectors
@@ -131,12 +128,12 @@ arma::rowvec cpp_derv_obj(NumericVector lam,NumericMatrix u, NumericVector ubar,
 }
 
 
-// [[Rcpp::export]]
 //This function gives us a one-step update for the BFGS algorithm
 //oldInv is the current "Approximate Inverse Hessian"
 //sk is the difference x_{k+1} - x_{k}
 //yk is the difference f'(x_{k+1}) - f'(x_{k})
 //where x_k is the optimization variable and f is the objective function
+// [[Rcpp::export]]
 arma::mat cpp_update_hessianInv(arma::mat oldInv, arma::vec sk, arma::vec yk){
   //We evaluate some scalars first since we use them in multiple locations
   // of the updating step
@@ -150,10 +147,11 @@ arma::mat cpp_update_hessianInv(arma::mat oldInv, arma::vec sk, arma::vec yk){
 }
 
 
-// [[Rcpp::export]]
 //A simple backtracking lin search
 //This formulation/notation is taken from Algorithm 9.2 of
 //Boyd, Stephen, and Lieven Vandenberghe. Convex optimization. 2004.
+
+// [[Rcpp::export]]
 double cpp_backtrack(double alpha,double beta, NumericVector x_val,
                      NumericVector del_x,NumericVector nabla_f,
                      NumericMatrix u, NumericVector ubar, arma::vec Ti,
@@ -181,9 +179,10 @@ double cpp_backtrack(double alpha,double beta, NumericVector x_val,
   return step;
 }
 
-// [[Rcpp::export]]
 //The main function for obtaining the point estimates.
 //This function implements a BFGS algorithm
+
+// [[Rcpp::export]]
 List cpp_quasi_newt(NumericVector ini,NumericMatrix u, NumericVector ubar,
                     arma::vec Ti, double theta, double alpha, double beta,
                     int max_iter, double tol){
