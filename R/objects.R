@@ -254,13 +254,19 @@ plot.ATE<- function(x, ...){
     w.p<- object$weights.p[Ti==1]
     w.q<- object$weights.q[Ti==0]
 
+<<<<<<< HEAD
     #Check if covariates are named
+=======
+>>>>>>> parent of 80fd528... Merge pull request #1 from asadharis/Try1
     names<- colnames(object$X)
     if(is.null(names)){
       p<- ncol(object$X)
-      names<- paste("X",1:p,sep = "") # Other wise use a default name X1,X2,...
+      names<- paste("X",1:p,sep = "")
     }
+<<<<<<< HEAD
     #Obtain the subsample of subjects for each treatment arm
+=======
+>>>>>>> parent of 80fd528... Merge pull request #1 from asadharis/Try1
     x1<- as.matrix(object$X[Ti==1,])
     x0<- as.matrix(object$X[Ti==0,])
     for(i in 1:ncol(x1)){
