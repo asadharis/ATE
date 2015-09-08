@@ -2,7 +2,7 @@
 #This creates the object with some routine checks
 #This also gives us the point estimates and can be used
 #with some summary and plot functions
-ATE<- function(Y, Ti, X, theta=0,
+ATE<- function(Y, Ti, X, theta = 1,
                ATT = FALSE, verbose = FALSE,
                max.iter = 100, tol = 1e-10, initial.values = NULL,
                backtrack.alpha = 0.3, backtrack.beta = 0.5){

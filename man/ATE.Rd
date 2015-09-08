@@ -9,7 +9,7 @@ Estimate the Average Treatment Effect
 The main function for estimating the average treatment effect or the average treatment effect on the treated. This function creates an \code{ATE} object which can be used as inputs for generic S3 \code{plot} or \code{summary} functions. This function uses a covariate balancing method which creates weights for each subject, without a need to specific a propensity score or an outcome regression model. The main function implements the BFGS algorithm with backtracking. For details of the estimator see Chan et al. (2015).
 }
 \usage{
-ATE (Y, Ti, X, theta = 0, ATT = FALSE,
+ATE (Y, Ti, X, theta = 1, ATT = FALSE,
     verbose = FALSE, max.iter = 100, tol = 1e-10,
     initial.values = NULL,
     backtrack.alpha = 0.3,
