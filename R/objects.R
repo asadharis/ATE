@@ -247,32 +247,42 @@ plot.ATE<- function(x, ...){
   object<- x
   Ti<- object$Ti
   ##################Case 1: Simple binary treatment###################
-  
-  if(object$gp == "simple"){
+
+  if(object$gp == "simple"|| object$gp == "ATT"){
     #Obtain weights
+    ATT<- object$gp == "ATT"
     w.p<- object$weights.p[Ti==1]
     w.q<- object$weights.q[Ti==0]
-    
+
     #Check if covariates are named
     names<- colnames(object$X)
     if(is.null(names)){
       p<- ncol(object$X)
       names<- paste("X",1:p,sep = "") # Other wise use a default name X1,X2,...
     }
-    
+    #Obtain the subsample of subjects for each treatment arm
     x1<- as.matrix(object$X[Ti==1,])
     x0<- as.matrix(object$X[Ti==0,])
     for(i in 1:ncol(x1)){
+      #Plot the first covariate
+      #Allow user to sequentially view subsequent plots
       if(i==2) par(ask = TRUE)
 
+      #A special plot function for binary covariates
       if(length(unique(object$X[,i])) == 2){
         Treatment<- x1[,i]
         Placebo<- x0[,i]
+        #First plot the unweighted case
+        #This function plots the means for each treatment and covairate arm
+        par(mfrow = c(1,2))
         plot(c(0.5,1,2,2.5), c(2,mean(Treatment), mean(Placebo),2), pch = 16, cex = 1.5,
              ylim = c(0,1), ylab = "Mean of group", xlab = "",col = c("blue","red"),
              main = "Unweighted", xaxt = "n")
-        axis(side = 1, at = c(1,2), labels = c("Treatment", "Control") )
-        abline(h = mean(object$X[,i]), lty = 2)
+        axis(side = 1, at = c(1,2), labels = c("Treatment", "Control") ) #Add the x-axis
+        abline(h = mean(object$X[,i]), lty = 2) #Horizontal line for the sample mean
+
+        #Now we plot the weighed means
+        #for treatment and placebo groups
         new_treat<- sum(w.p*Treatment)
         new_control<- sum(w.q*Placebo)
         plot(c(0.5,1,2,2.5), c(2, new_treat, new_control,2), pch = 16, cex = 1.5,
@@ -282,8 +292,12 @@ plot.ATE<- function(x, ...){
         abline(h = mean(object$X[,i]), lty = 2)
 
       }else{
+        #Obtain the range for the X-axis
         rng<- range(c(x1[,i],x0[,i]))
+        #Obtain a seqence of points at which we will plot the CDF
         my.seq<- seq(rng[1],rng[2],length = 100)
+
+        #Evaluate and plot the unweigted emiprical CDF
         temp1<- sapply(my.seq, my.ecdf,x = x1[,i])
         temp0<- sapply(my.seq, my.ecdf,x = x0[,i])
         par(mfrow = c(1,2))
@@ -292,6 +306,7 @@ plot.ATE<- function(x, ...){
         lines(my.seq, temp0, cex = 0.4, pch = 16, lty = 2,col = "blue")
         legend("bottomright", c("Treatment", "Control"), lty = c(1,2), col = c("red", "blue"))
 
+        #PLot the weighted CDF after covariate balancing.
         temp1<- sapply(my.seq, my.ecdf,x = x1[,i],weights = w.p)
         temp0<- sapply(my.seq, my.ecdf,x = x0[,i], weights = w.q)
         plot(my.seq,temp1,cex = 0.4,pch = 16,type = "l",lty = 1,col = "red",
@@ -299,17 +314,21 @@ plot.ATE<- function(x, ...){
         lines(my.seq, temp0, cex = 0.4, pch = 16, lty = 2,col = "blue")
       }
     }
-    par(ask = FALSE)
 
+    par(ask = FALSE)
+    #Second, for average treatment effect on the treated
+    #We only balance on group in this case
   }else if(object$gp == "ATT"){
-    #w.p<- object$weights.p[Ti==1]
+    #Obatin  the weights for our object
     w.q<- object$weights.q[Ti==0]
 
+    #Again, obtain/set covariate names
     names<- colnames(object$X)
     if(is.null(names)){
       p<- ncol(object$X)
       names<- paste("X",1:p,sep = "")
     }
+
     x1<- object$X[Ti==1,]
     x0<- object$X[Ti==0,]
     for(i in 1:ncol(x1)){
