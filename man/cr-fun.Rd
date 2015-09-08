@@ -54,9 +54,10 @@ Asad Haris, Gary Chan
 \examples{
 #Cressie-Read Family example
 data("nsw")
-Y<-nsw$re78[301:500]
-X<-nsw[301:500,-c(1,9)]
-treat<-nsw$treat[301:500]
+Y<-nsw$re78
+X<-nsw[,-c(1,9)]
+X<- as.matrix(X)
+treat<-nsw$treat
 
 #Exponential tilting
 ATE(Y,treat,X,theta = 0)

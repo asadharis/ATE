@@ -5,7 +5,7 @@
 Subsample of National Health and Nutritional Examination Survey for School Children
 }
 \description{
-This data is a limited subset of the 2007-2008 National Health and Nutrition Examination Survey (NHANES), for studying whether particpation of school meal programs lead to an increase in body mass index (BMI). 
+This data is a limited subset of the 2007-2008 National Health and Nutrition Examination Survey (NHANES), for studying whether particpation of school meal programs lead to an increase in body mass index (BMI).
 }
 \usage{data(nhanes_bmi)}
 
@@ -38,9 +38,10 @@ Data adapted from the 2007-2008 National Health and Nutrition Examination Survey
 library(ATE)
 data("nhanes_bmi")
 
-Y<-nhanes_bmi[1:500,1]
-treat<-nhanes_bmi[1:500,2]
-X<-nhanes_bmi[1:500,-c(1,2)]
+Y<-nhanes_bmi[,1]
+treat<-nhanes_bmi[,2]
+X<-nhanes_bmi[,-c(1,2)]
+X<- as.matrix(X)
 
 fit1<- ATE(Y,treat,X)
 fit1

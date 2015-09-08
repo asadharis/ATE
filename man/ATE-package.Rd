@@ -12,8 +12,8 @@ This package provides a user-friendly interface for nonparametric efficient infe
 \tabular{ll}{
 Package: \tab ATE\cr
 Type: \tab Package\cr
-Version: \tab 0.3.1\cr
-Date: \tab 2015-09-07\cr
+Version: \tab 0.3.2\cr
+Date: \tab 2015-09-08\cr
 License: \tab GPL (>= 2) \cr
 }
 
