@@ -21,7 +21,7 @@ arma::vec cpp_cr_rho(arma::vec x, double theta) {
     xv = log(1-x);// The limiting case of theta = -1, use L'Hopital's rule
   }else{
     // The function we use for all other values of theta
-    xv = -pow((1+theta*x), 1+1/theta);
+    xv = -1*pow((1+theta*x), 1+1/theta);
     xv = xv/(1+theta);
   }
 
