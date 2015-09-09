@@ -16,12 +16,12 @@ arma::vec cpp_cr_rho(arma::vec x, double theta) {
 
 
   if(theta == 0){
-    xv = -exp(-x); //The limiting case of theta = 0. Easy to calculate
+    xv = -exp(x); //The limiting case of theta = 0. Easy to calculate
   }else if(theta == -1){
-    xv = log(1+x);// The limiting case of theta = -1, use L'Hopital's rule
+    xv = log(1-x);// The limiting case of theta = -1, use L'Hopital's rule
   }else{
     // The function we use for all other values of theta
-    xv = -1*pow((1-theta*x), 1+1/theta);
+    xv = -pow((1+theta*x), 1+1/theta);
     xv = xv/(1+theta);
   }
 
@@ -40,11 +40,11 @@ arma::vec cpp_dcr_rho(arma::vec x, double theta) {
   arma::vec xv(x.size());
 
   if(theta == 0){
-    xv = exp(-x);
+    xv = -exp(x);
   }else if(theta == -1){
-    xv = 1/(1+x);
+    xv = -1/(1-x);
   }else{
-    xv = pow((1-theta*x),1/theta);
+    xv = -1*pow((1+theta*x),1/theta);
   }
 
   xv.elem(find_nonfinite(xv)).fill(-1*datum::inf);
@@ -58,19 +58,17 @@ arma::vec cpp_ddcr_rho(arma::vec x, double theta) {
   arma::vec xv(x.size());
 
   if(theta == 0){
-    xv = -exp(-x);
+    xv = -exp(x);
   }else if(theta == -1){
-    xv = -1/pow((1+x),2);
+    xv = -1/pow((1-x),2);
   }else{
-    xv = -1*pow((1-theta*x),1/theta-1);
+    xv = -1*pow((1+theta*x),1/theta-1);
   }
 
   xv.elem(find_nonfinite(xv)).fill(-1*datum::inf);
-
   return xv;
 }
 
-//////////////////////////////////////////////////////////
 
 //The main objective function which we need to optimize over.
 //See package Vignette for the objective functions/optimization problem
