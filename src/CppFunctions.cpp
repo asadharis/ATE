@@ -214,6 +214,7 @@ List cpp_quasi_newt(NumericVector ini,NumericMatrix u, NumericVector ubar,
     //Evaluate the objective function as the current point
     //We use this later to check if the objective is unbounded
     objValue = cpp_obj(as<NumericVector>(wrap(current_est)), u,  ubar, Ti,  theta);
+    //cout << objValue<< "\n";
 
     //Calculate the Stepsize using the backtracking line search algorithm
     stepSize = cpp_backtrack(alpha,beta, as<NumericVector>(wrap(current_est)),
@@ -221,6 +222,8 @@ List cpp_quasi_newt(NumericVector ini,NumericMatrix u, NumericVector ubar,
                   as<NumericVector>(wrap(current_derv)),
                   u,ubar, Ti,theta);
 
+
+    //cout<< stepSize << "\n";
     //Calulate the new estimate
     new_est = current_est + stepSize*current_direction;
 
@@ -228,6 +231,20 @@ List cpp_quasi_newt(NumericVector ini,NumericMatrix u, NumericVector ubar,
     new_derv = trans(cpp_derv_obj(as<NumericVector>(wrap(new_est)), u,ubar,Ti,theta));
     yk = new_derv - current_derv;
     sk = new_est - current_est;
+
+    if(sum(square(sk)) < 1e-22 & sum(square(yk))< 1e-22 ){
+      Function warning("warning");
+      warning("No change in step size, for given theta, function may be non-convex or algorithm converged to the boundary.");
+      arma::vec weights = zeros<vec>(N);
+      arma::uvec indx = find(Ti == 1);
+      arma::vec lambda(new_est.begin(), new_est.size(), false);
+      weights.elem(indx) = (cpp_dcr_rho( umat*lambda, theta)).elem(indx)/N;
+      return List::create(Named("res") = new_est, Named("weights") = weights,
+                          Named("Conv") = false,
+                          Named("IH") = current_InvHessian);
+    }
+
+    //cout<< sum(square(sk))<< ", "<<sum(square(yk)) << "\n";
     new_InvHessian = cpp_update_hessianInv(current_InvHessian, sk, yk);
 
     //For some cases, say theta = -1, the objective function can be unbounded
@@ -241,12 +258,14 @@ List cpp_quasi_newt(NumericVector ini,NumericMatrix u, NumericVector ubar,
       arma::vec lambda(new_est.begin(), new_est.size(), false);
       weights.elem(indx) = (cpp_dcr_rho( umat*lambda, theta)).elem(indx)/N;
       return List::create(Named("res") = new_est, Named("weights") = weights,
-                          Named("Conv") = false);
+                          Named("Conv") = false,
+                          Named("IH") = current_InvHessian);
     }
 
     //Check convergence by checking the first derivative
     //Since the derivative would be 0 at a critical point we
     //calculate the l2 norm to check convergence
+    //cout<< sum(square(new_derv))<<", "<< objValue << "\n";
     if(sum(square(new_derv)) < tol ){
       //If the stopping condition is met
       //Calculate the weights used for getting our final estimate
@@ -255,7 +274,8 @@ List cpp_quasi_newt(NumericVector ini,NumericMatrix u, NumericVector ubar,
       arma::vec lambda(new_est.begin(), new_est.size(), false);
       weights.elem(indx) = (cpp_dcr_rho( umat*lambda, theta)).elem(indx)/N;
       return List::create(Named("res") = new_est, Named("weights") = weights,
-                          Named("Conv") = true);
+                          Named("Conv") = true,
+                          Named("IH") = current_InvHessian);
     }else{
       //If stopping condition is not met update the current estimate and
       //current InvHessian
@@ -272,5 +292,6 @@ List cpp_quasi_newt(NumericVector ini,NumericMatrix u, NumericVector ubar,
   weights.elem(indx) = (cpp_dcr_rho( umat*lambda, theta)).elem(indx)/N;
 
   return List::create(Named("res") = new_est, Named("weights") = weights,
-                      Named("Conv") = false);
+                      Named("Conv") = false,
+                      Named("IH") = current_InvHessian);
 }

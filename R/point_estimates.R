@@ -34,12 +34,14 @@ get.est.simple<- function(ini1,ini2, X, Y, Ti, theta, max.iter = 100,
   p.hat<- cpp_quasi_newt(ini1,umat, ubar, Ti, theta, bt.a,bt.b,
                  max.iter , tol)
 
+
   if(verbose){
     cat("\nRunning BFGS algorithm for estimating Weights q: \n")
   }
 
   #Implement the BFGS algorithm to get the optimal lambda_q
   #and correspoding weights \hat{q}_k
+
   q.hat<- cpp_quasi_newt(ini2,umat, ubar, 1 - Ti, theta, bt.a,bt.b,
                          max.iter, tol)
 
