@@ -30,7 +30,7 @@ A \eqn{n\times p}{n x p}-matrix of covariates \code{X} to be matched. This matri
 }
 
   \item{theta}{
-A real scalar parameter for the Cressie-Read family of objective functions.  The default is \eqn{\theta=0} (exponential tilting).  Other popular examples are \eqn{\theta=-1} (exponential tilting) and \eqn{\theta=1} (quadratic loss). See \code{\link{cpp_cr_rho}} for details.
+A real scalar parameter for the Cressie-Read family of objective functions.  The default is \eqn{\theta=0} (exponential tilting).  Other popular examples are \eqn{\theta=-1} (empirical likelihood) and \eqn{\theta=1} (quadratic loss). See \code{\link{cpp_cr_rho}} for details.
 }
 
   \item{ATT}{

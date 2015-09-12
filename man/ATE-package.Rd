@@ -13,7 +13,7 @@ This package provides a user-friendly interface for nonparametric efficient infe
 Package: \tab ATE\cr
 Type: \tab Package\cr
 Version: \tab 0.3.2\cr
-Date: \tab 2015-09-08\cr
+Date: \tab 2015-09-12\cr
 License: \tab GPL (>= 2) \cr
 }
 
@@ -23,6 +23,7 @@ The package includes the following functions:
 \code{\link{ATE}}: \tab Estimate the average treatment effect \cr
 \code{\link{summary.ATE}}: \tab \code{summary} method for class \code{"ATE"} \cr
 \code{\link{plot.ATE}}: \tab Plot function for class "RIPW" \cr
+
 }
 }
 
