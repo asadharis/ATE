@@ -1,175 +1,254 @@
-###################NOTE#############################
-#For simplicity we use three different functions for
-#the three different cases
-#1. Binary simple estimate
-#2. Binary treatment for ATT
-#3. Multiple treatment arms
-###################NOTE##############################
-#####################################################
 
-#CASE 1: Binary treatment. Simple case, i.e. not ATT
-get.est.simple<- function(ini1,ini2, X, Y, Ti, theta, max.iter = 100,
-                          tol = 1e-3,  bt.a = 0.3, bt.b = 0.5,
-                          verbose = TRUE){
+GetPointEstSimple <- function(initial.one, initial.two, ...) {
+  # Function to get point estimates for the simple case of
+  # binary treatment and NOT the case of treatement effect on
+  # the treated.
+  #
+  # Args:
+  #   initial.one: The initial vector for first BFGS algorithm (treatment arm).
+  #   initial.two: The initial vector for second BFGS algorithm (placebo arm).
+  #   ...: Other arguments to be passed to the function from parent.
+  #
+  # Returns:
+  #   A list of estimated lambda values where lambda is the parameter
+  #   vector which we optiize over. It also contains the weights
+  #   obtained from the estimated lambda values used for covariate
+  #   balancing estimates. Finally, the list also contains the
+  #   point estimates and convergence indicator.
 
-  #initialize some objects
-  N<- length(Y)
-  umat<- cbind(1,X)
-  ubar <- colMeans(umat)
+  #Obtain extra arguments
+  args<- list(...)
+  Y <- args$Y
+  X <- args$X
+  treat <- args$treat
+  theta <- args$theta
+  max.iter <- args$max.iter
+  tol <- args$tol
+  backtrack.alpha <- args$backtrack.alpha
+  backtrack.beta <- args$backtrack.beta
+  verbose <- args$verbose
 
-  #Perform some simple checks
-  if(length(ini1) != length( umat[1,] ) ){
+  N <- length(Y)  # Sample size.
+  u.mat <- cbind(1, X)  # Obtain u matrix of covariates.
+  u.bar <- colMeans(u.mat)  # Get column means.
+
+  # Perform some simple checks.
+  if (length(initial.one) != length(u.mat[1, ])) {
     stop("Incorrect length of initial vector")
   }
-  if(length(ini2) != length( umat[1,] ) ){
+  if (length(initial.two) != length(u.mat[1, ])) {
     stop("Incorrect length of initial vector")
   }
-
-  if(verbose){
+  if (verbose) {
     cat("Running BFGS algorithm for estimating Weights p: \n")
   }
 
-  #Implement the BFGS algorithm to get the optimal lambda_p
-  #and correspoding weights \hat{p}_k
-  p.hat<- cpp_quasi_newt(ini1,umat, ubar, Ti, theta, bt.a,bt.b,
-                 max.iter , tol)
+  # Implement the BFGS algorithm to get the optimal lambda
+  # and correspoding weights.
+  # This corresponds to \lambda_p and \hat{p}_K in vignette.
+  treatment.hat <- BFGSAlgorithm(initial.one, u.mat, u.bar, treat,
+                                 theta, backtrack.alpha,
+                                 backtrack.beta, max.iter,
+                                 tol)
 
-  if(verbose){
+  if (verbose) {
     cat("\nRunning BFGS algorithm for estimating Weights q: \n")
   }
 
-  #Implement the BFGS algorithm to get the optimal lambda_q
-  #and correspoding weights \hat{q}_k
-  q.hat<- cpp_quasi_newt(ini2,umat, ubar, 1 - Ti, theta, bt.a,bt.b,
-                         max.iter, tol)
+  # Implement the BFGS algorithm to get the optimal lambda_q
+  # and correspoding weights \hat{q}_K.
+  placebo.hat <- BFGSAlgorithm(initial.two, u.mat, u.bar, 1 - treat,
+                               theta, backtrack.alpha,
+                               backtrack.beta,
+                               max.iter, tol)
 
-  #Obtain estimates for E[Y(1)], E[Y(0)] and tau = E[Y(1)] - E[Y(0)]
-  Y_one <-  sum((p.hat$weights*Y)[Ti==1])
-  Y_zero<- sum((q.hat$weights*Y)[Ti==0])
-  tau.hat<-  Y_one - Y_zero
+  # Obtain estimates for tau1 = E[Y(1)], tau2 = E[Y(0)]
+  # and tau = E[Y(1)] - E[Y(0)].
+  tau.one  <- sum((treatment.hat$weights * Y)[treat == 1])
+  tau.zero <- sum((placebo.hat$weights * Y)[treat == 0])
+  tau <- tau.one - tau.zero
 
-  #Obtain weights and lambda's
-  w.p<- p.hat$weights
-  w.q<- q.hat$weights
+  # Obtain estimated weights and lambda's for
+  # each treatment arm.
+  weights.treat <- treatment.hat$weights
+  weights.placebo <- placebo.hat$weights
 
-  lam.p<- p.hat$res
-  lam.q<- q.hat$res
+  lambda.treat <- treatment.hat$results
+  lambda.placebo <- placebo.hat$results
 
-  #Send warning if algorithm did not converge
-  conv = TRUE
-  if(!p.hat$Conv | !q.hat$Conv){
+  # Throw a warning if algorithm did not converge.
+  converge = TRUE
+  if (!treatment.hat$converge | !placebo.hat$converge) {
     warning("BFGS Algorithm did not converge for atleast one objective function.")
-    conv<- FALSE
+    converge <- FALSE
   }
 
-  #Return list of objects
-  res.l<- list("lam.p" = lam.p, "lam.q" = lam.q, "weights.p" = w.p,
-               "weights.q" = w.q, "Y1" = Y_one, "Y0"= Y_zero,"tau" = tau.hat,
-               "conv" = conv)
-  return(res.l)
+  # Return list of objects
+  return(list(lambda.treat    = lambda.treat,
+              lambda.placebo  = lambda.placebo,
+              weights.treat   = weights.treat,
+              weights.placebo = weights.placebo,
+              tau.one = tau.one, tau.zero = tau.zero,
+              tau = tau, converge = converge))
 }
 
-###############################################################################
-#Main function to obtain the point estimate for ATT
-get.est.ATT<- function(ini2, X, Y, Ti, theta, max.iter = 100,
-                       tol = 1e-3,  bt.a = 0.3, bt.b = 0.5,
-                       verbose = TRUE){
 
-  #Initialize
-  N<- length(Y)
-  umat<- cbind(1,X)
+GetPointEstATT <- function(initial, ...) {
+  # Function to get point estimates average treatment effect
+  # on the treated. This case also has binary treatment.
+  #
+  # Args:
+  #   initial: The initial vector for the BFGS algorithm.
+  #   ...: Other arguments to be passed to the function.
+  #
+  # Returns:
+  #   List of objects similar to the previous function. However, this
+  #   function does not return lambda or weights for the treatment arm.
+  #   This is because the we do not need a covariate balancing technique
+  #   for the treatment arm in this case.
 
-  #Main difference is that now u_bar chnages
-  umat2<- umat[Ti==1,]
-  ubar <- colMeans(umat2)
+  #Obtain extra arguments
+  args<- list(...)
+  Y <- args$Y
+  X <- args$X
+  treat <- args$treat
+  theta <- args$theta
+  max.iter <- args$max.iter
+  tol <- args$tol
+  backtrack.alpha <- args$backtrack.alpha
+  backtrack.beta <- args$backtrack.beta
+  verbose <- args$verbose
 
-  if(length(ini2) != length( umat[1,] ) ){
+  N <- length(Y)  # Sample size.
+  u.mat <- cbind(1, X)  # Design matrix u.
+
+  # Main difference here is the definition of u.bar.
+  # u.bar is vector of column means ONLY for those
+  # who recieved the treatment.
+  u.bar <- colMeans(u.mat[treat == 1, ])
+
+  if (length(initial) != length(u.mat[1, ])) {
     stop("Incorrect length of initial vector")
   }
-
-  if(verbose){
+  if (verbose) {
     cat("\nRunning BFGS algorithm Raphson for estimating Weights q: \n")
   }
 
-  #Obtain lambda'_q and \hat{q}_K for the case of ATT
-  q.hat<- cpp_quasi_newt(ini2,umat, ubar, 1 - Ti, theta, bt.a,bt.b,
-                         max.iter, tol)
+  # Run the BFGS algorithm for obtaining the parameter and weights
+  # used for covariate balancing.
+  placebo.hat <- BFGSAlgorithm(initial, u.mat, u.bar,
+                                1 - treat, theta,
+                                backtrack.alpha, backtrack.beta,
+                                max.iter, tol)
 
-  #Note that treatment effect on treated is simple to estimate
-  Y_one <- mean(Y[Ti==1])
-  #The calibration estimator for E[Y(0)|T = 1]
-  Y_zero<- sum((q.hat$weights*Y)[Ti==0])
-  tau.hat<-  Y_one - Y_zero
+  # Note that treatment effect on treated is simple to estimate
+  tau.one <- mean(Y[treat == 1])
+  # The calibration estimator for E[Y(0)|T = 1]
+  tau.zero <- sum((placebo.hat$weights * Y)[treat == 0])
+  tau <- tau.one - tau.zero
 
-  #Weights and lambda vectors
-  w.q<- q.hat$weights
-  lam.q<- q.hat$res
+  # Weights and lambda vectors
+  weights.placebo <- placebo.hat$weights
+  lambda.placebo <- placebo.hat$results
 
-  #Warning message if the algorithm did not converge
-  conv = TRUE
-  if(!q.hat$Conv){
+  # Warning message if the algorithm did not converge
+  converge = TRUE
+  if (!placebo.hat$converge) {
     warning("\nBFGS algorithm did not converge for the objective function.")
-    conv<- FALSE
+    converge <- FALSE
   }
 
-  #Return list
-  res.l<- list("lam.q" = lam.q, "weights.q" = w.q,
-               "Y1" = Y_one, "Y0"= Y_zero,"tau" = tau.hat,
-               "conv" = conv)
-  return(res.l)
+  # Return list
+  return(list(lambda.placebo = lambda.placebo,
+              weights.placebo = weights.placebo,
+              tau.one = tau.one, tau.zero = tau.zero,
+              tau = tau, converge = converge))
 }
 
-###############################################################################
-#Main function to obtain the point estimate for multiple treatment effect
-#Much of the syntax is the same as for the binary case
-get.est.MT<- function(ini.mat, X, Y, Ti, theta, max.iter = 100,
-                      tol = 1e-3,  bt.a = 0.3, bt.b = 0.5,
-                      verbose = TRUE){
 
-  #initialize some objects
-  N<- length(Y)
-  J<-length(unique(Ti))
-  umat<- cbind(1,X)
-  ubar <- colMeans(umat)
+GetPointEstMultiple <- function(initial.mat, ...) {
+  # Function to get point estimates for treatment effect
+  # when we have multiple treatment arms.
+  #
+  # Args:
+  #   initial.mat: A matrix of initial values for the different
+  #                BFGS algorithm. Each row is an inital vector for
+  #                an algorithm. The total number of rows is J: number of
+  #                different treatment arms.
+  #   ...: Other arguments to be passed to the function.
+  #
+  # Returns:
+  #   A List with the following objects
+  #     lam.mat: A matrix of estimated lambda values. This has the same
+  #              dimensions as initial.mat.
+  #     weights.mat: A matrix estimated weights. The j-th row
+  #                  corresponds to the weights for treatment j.
+  #     tau.treatment.j: A vector of estimates of [EY(0), EY(1),..., EY(J-1)].
+  #     converge: A boolean indicator of convergence status.
 
-  if(ncol(ini.mat) != length( umat[1,] ) ){
+
+  #Obtain extra arguments
+  args<- list(...)
+  Y <- args$Y
+  X <- args$X
+  treat <- args$treat
+  theta <- args$theta
+  max.iter <- args$max.iter
+  tol <- args$tol
+  backtrack.alpha <- args$backtrack.alpha
+  backtrack.beta <- args$backtrack.beta
+  verbose <- args$verbose
+
+  N <- length(Y)  # Sample size.
+  J <- length(unique(treat))  # Number of treatment arms.
+  u.mat <- cbind(1, X)  # Obtain design matrix u.
+  u.bar <- colMeans(u.mat)  # Obtain column means of design matrix.
+
+  # A simple verification of dimensions.
+  if (ncol(initial.mat) != length(u.mat[1, ])) {
     stop("Incorrect length of initial vector")
   }
-  if(verbose){
+  if (verbose) {
     cat("\nRunning BFGS for estimating Weights: \n")
   }
 
-  lam.mat<- matrix(0, ncol = ncol(ini.mat), nrow = J  )
-  weights.mat<- matrix(0, ncol = N, nrow = J  )
-  Yj.mat<- numeric( J )
+  # Initialize the matrices and vector which will be returned
+  # by this function.
+  lam.mat <- matrix(0, ncol = ncol(initial.mat), nrow = J)
+  weights.mat <- matrix(0, ncol = N, nrow = J)
+  tau.treatment.j <- numeric(J)
 
-  #Loop through the treatment arms
-  for(j in 0:(J-1 ) ){
-    #Inidicator of treatment arm being treamtent j
-    temp.Ti<- 1*(Ti==j)
+  # Loop through the different treatment arms.
+  for (j in 0:(J - 1)) {
+    # Inidicator of treatment arm.
+    temp.treat <- 1 * (treat == j)
 
-    #Implement BFGS algorithm
-    pj.hat<- cpp_quasi_newt(ini.mat[j+1,],umat, ubar, temp.Ti, theta, bt.a,bt.b,
-                           max.iter, tol)
+    # Implement BFGS algorithm
+    treatment.j.hat <- BFGSAlgorithm(initial.mat[j + 1, ],
+                                     u.mat, u.bar, temp.treat,
+                                     theta,
+                                     backtrack.alpha,
+                                     backtrack.beta, max.iter, tol)
 
-    #Find estimate for  E[Y(j)]
-    Yj.hat <-  sum((pj.hat$weights*Y)[temp.Ti==1])
+    # Find estimate for E[Y(j)]
+    tau.j.hat <- sum((treatment.j.hat$weights * Y)[temp.treat == 1])
 
-    Yj.mat[j+1]<- Yj.hat
-    lam.mat[j+1,]<- pj.hat$res
-    weights.mat[j+1,] <- pj.hat$weights
+    tau.treatment.j[j + 1] <- tau.j.hat
+    lam.mat[j + 1, ] <- treatment.j.hat$results
+    weights.mat[j + 1, ] <- treatment.j.hat$weights
 
-    #Warning for non-convergence
-    conv = TRUE
-    if(!pj.hat$Conv){
-      warning("BFGS algorithm did not converge for atleast one objective function.")
-      conv<- FALSE
+    # Warning for non-convergence
+    converge = TRUE
+    if (!treatment.j.hat$converge) {
+      warning(paste("BFGS algorithm did not converge for treatment arm",
+                    j))
+      converge <- FALSE
     }
   }
-  #Rerutn result.
-  res.l<- list("lam.mat" = lam.mat, "weights.mat" = weights.mat,
-               "Yj.hat" = Yj.mat, "conv" = conv)
-  return(res.l)
-}
+  # Return result.
 
-###############################################################################
+  return(list(lam.mat = lam.mat,
+              weights.mat = weights.mat,
+              tau.treatment.j = tau.treatment.j,
+              converge = converge))
+}

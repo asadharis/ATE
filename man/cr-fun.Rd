@@ -1,8 +1,8 @@
 \name{Cressie and Read objective functions}
 \alias{Cressie and Read function}
-\alias{cpp_cr_rho}
-\alias{cpp_dcr_rho}
-\alias{cpp_ddcr_rho}
+\alias{CRFamily}
+\alias{CRFamilyDerivative}
+\alias{CRFamilySecondDerivative}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Cressie and Read objective functions
@@ -11,9 +11,9 @@ Cressie and Read objective functions
 Cressie and Read class of objective functions parameterized by a scalar \eqn{\theta}.
 }
 \usage{
-cpp_cr_rho(x,theta)
-cpp_dcr_rho(x,theta)
-cpp_ddcr_rho(x,theta)
+CRFamily(x,theta)
+CRFamilyDerivative(x,theta)
+CRFamilySecondDerivative(x,theta)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
