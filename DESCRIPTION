@@ -1,7 +1,7 @@
 Package: ATE
 Type: Package
 Title: Inference for Average Treatment Effects using Covariate Balancing
-Version: 0.3.2
+Version: 0.4.0
 Date: 2015-09-12
 Author: Asad Haris <aharis@uw.edu> and Gary Chan <kcgchan@uw.edu>
 Maintainer: Asad Haris <aharis@uw.edu>

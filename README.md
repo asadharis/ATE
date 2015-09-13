@@ -18,6 +18,7 @@ The package also allows inference by consistent variance estimates.
 * Ease of use: The main function `ATE` requires only a numeric matrix `X` of covariates, numeric vector `Y` of response 
 and `treat` vector indicating treatment assignment.
 ```R
+set.seed(1)
 library(ATE)
 #Generate some data
 n<- 500
@@ -30,19 +31,14 @@ Y<-  10*treat+ (2*treat-1)*(X[,1] - 0.5*X[,2] + 0.25*X[,3] +  X[,6] + 0.5*X[,8])
 
 #Fit ATE object
 fit1 <- ATE(Y,treat,X)
-```
-* `S3` summary methods for objects of class `ATE`.
-```R
 summary(fit1)
-
 Call:
-ATE(Y = Y, Ti = treat, X = X)
+ATE(Y = Y, treat = treat, X = X)
 
-         Estimate    StdErr 95%.Lower 95%.Upper  Z.value p.value    
-E[Y(0)] -0.625055  0.114586 -0.849640 -0.400470  -5.4549 4.9e-08 ***
-E[Y(1)] 10.559242  0.084657 10.393317 10.725168 124.7291 < 2e-16 ***
-E[Y(2)] 22.231546  0.241661 21.757899 22.705194  91.9946 < 2e-16 ***
-E[Y(3)] 33.240013  0.352811 32.548516 33.931510  94.2148 < 2e-16 ***
+         Estimate Std. Error 95%.Lower 95%.Upper z value   p value    
+E[Y(1)] 10.650818   0.112995 10.429353 10.872284 94.2594 < 2.2e-16 ***
+E[Y(0)] -0.708631   0.088772 -0.882621 -0.534641 -7.9826 1.433e-15 ***
+ATE     11.359449   0.169154 11.027913 11.690986 67.1544 < 2.2e-16 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
@@ -59,12 +55,12 @@ plot(fit1)
 fit2<-ATE(Y,treat,X, ATT = TRUE)
 summary(fit2)
 Call:
-ATE(Y = Y, Ti = treat, X = X, ATT = TRUE)
+ATE(Y = Y, treat = treat, X = X, ATT = TRUE)
 
-             Estimate    StdErr 95%.Lower 95%.Upper Z.value p.value    
-E[Y(1)|T=1]  9.820802  0.114407  9.596569 10.045035 85.8412  <2e-16 ***
-E[Y(0)|T=1]  0.158785  0.127597 -0.091301  0.408870  1.2444  0.2133    
-ATT          9.662018  0.214933  9.240757 10.083278 44.9537  <2e-16 ***
+             Estimate Std. Error 95%.Lower 95%.Upper z value p value    
+E[Y(1)|T=1]  9.820802   0.114407  9.596569 10.045035 85.8412  <2e-16 ***
+E[Y(0)|T=1]  0.158785   0.127597 -0.091301  0.408870  1.2444  0.2133    
+ATT          9.662018   0.214933  9.240757 10.083278 44.9537  <2e-16 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
@@ -76,13 +72,13 @@ fit3<-ATE(Y,treat,X)
 summary(fit3)
 
 Call:
-ATE(Y = Y, Ti = treat, X = X)
+ATE(Y = Y, treat = treat, X = X)
 
-         Estimate    StdErr 95%.Lower 95%.Upper  Z.value p.value    
-E[Y(0)] -0.625055  0.114586 -0.849640 -0.400470  -5.4549 4.9e-08 ***
-E[Y(1)] 10.559242  0.084657 10.393317 10.725168 124.7291 < 2e-16 ***
-E[Y(2)] 22.231546  0.241661 21.757899 22.705194  91.9946 < 2e-16 ***
-E[Y(3)] 33.240013  0.352811 32.548516 33.931510  94.2148 < 2e-16 ***
+         Estimate Std. Error 95%.Lower 95%.Upper  z value p value    
+E[Y(0)] -0.625055   0.114586 -0.849640 -0.400470  -5.4549 4.9e-08 ***
+E[Y(1)] 10.559242   0.084657 10.393317 10.725168 124.7291 < 2e-16 ***
+E[Y(2)] 22.231546   0.241661 21.757899 22.705194  91.9946 < 2e-16 ***
+E[Y(3)] 33.240013   0.352811 32.548516 33.931510  94.2148 < 2e-16 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 plot(fit3)

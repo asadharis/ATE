@@ -16,11 +16,11 @@ Summarizing output of study.
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{object}{
-An object of class \code{"ATE"}, usually a result of a call 
+An object of class \code{"ATE"}, usually a result of a call
 to \code{\link{ATE}}.
 }
 \item{x}{
-An object of class \code{"summary.ATE"}, usually a result of 
+An object of class \code{"summary.ATE"}, usually a result of
 a call to \code{\link{summary.ATE}}.
 }
   \item{\dots}{
@@ -94,7 +94,7 @@ treat <- numeric(n)
 treat[U>(1-prop2)]=2
 treat[U<(1-prop2)& U>(prop2-prop1)]=1
 
-Y <- 210 + 10*treat +(27.4*Z[,1] + 13.7*Z[,2] + 
+Y <- 210 + 10*treat +(27.4*Z[,1] + 13.7*Z[,2] +
             13.7*Z[,3] + 13.7*Z[,4]) + rnorm(n)
 X <- cbind(exp(Z[,1])/2,Z[,2]/(1+exp(Z[,1])),
             (Z[,1]*Z[,3]/25+0.6)^3,(Z[,2]+Z[,4]+20)^2)

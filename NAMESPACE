@@ -2,7 +2,7 @@ useDynLib(ATE)
 importFrom(Rcpp, evalCpp)
 import(Matrix)
 
-export(ATE,  cpp_cr_rho,  cpp_dcr_rho, cpp_ddcr_rho)
+export(ATE,  CRFamily, CRFamilyDerivative, CRFamilySecondDerivative)
 S3method(print, ATE)
 S3method(summary, ATE)
 S3method(plot, ATE)
