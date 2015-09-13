@@ -21,16 +21,17 @@ and `treat` vector indicating treatment assignment.
 set.seed(1)
 library(ATE)
 #Generate some data
-n<- 500
-X1<- matrix(rnorm(n*5), ncol = 5)
-X2<- matrix(rbinom(3*n, 1, 0.4), ncol = 3)
-X<- cbind(X1, X2)
-prop <- 1 / (1 + exp( X[,1] - 0.5*X[,2] + 0.25*X[,3] +  X[,6] + 0.5*X[,8] ) )
+n <- 500
+X1 <- matrix(rnorm(n * 5), ncol = 5)
+X2 <- matrix(rbinom(3 * n, 1, 0.4), ncol = 3)
+X <- cbind(X1, X2)
+prop <- 1 / (1 + exp(X[, 1] - 0.5 * X[, 2] + 0.25 * X[, 3] + X[, 6] + 0.5 * X[, 8]))
 treat<- rbinom(n, 1, prop)
-Y<-  10*treat+ (2*treat-1)*(X[,1] - 0.5*X[,2] + 0.25*X[,3] +  X[,6] + 0.5*X[,8]) + rnorm(n)
+Y<-  10 * treat + (2 * treat - 1) *
+     (X[, 1] - 0.5 * X[, 2] + 0.25 * X[, 3] + X[, 6] + 0.5 * X[, 8]) + rnorm(n)
 
 #Fit ATE object
-fit1 <- ATE(Y,treat,X)
+fit1 <- ATE(Y, treat, X)
 summary(fit1)
 Call:
 ATE(Y = Y, treat = treat, X = X)
@@ -52,7 +53,7 @@ plot(fit1)
 
 * We can also estimate the average treatment effect on the treated. 
 ```R
-fit2<-ATE(Y,treat,X, ATT = TRUE)
+fit2 <- ATE(Y, treat, X, ATT = TRUE)
 summary(fit2)
 Call:
 ATE(Y = Y, treat = treat, X = X, ATT = TRUE)
@@ -66,8 +67,10 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 ```
 * `ATE` automatically detects and estimates the case of multiple treatment arm. 
 ```R
-treat<- rbinom(n, 3, prop)
-Y<-  10*treat+ (2*treat-1)*(X[,1] - 0.5*X[,2] + 0.25*X[,3] +  X[,6] + 0.5*X[,8]) + rnorm(n)
+treat <- rbinom(n, 3, prop)
+Y<-  10 * treat + (2 * treat - 1) *
+     (X[, 1] - 0.5 * X[, 2] + 0.25 * X[, 3] + X[, 6] + 0.5 * X[, 8]) +
+     rnorm(n)
 fit3<-ATE(Y,treat,X)
 summary(fit3)
 
@@ -89,15 +92,17 @@ plot(fit3)
 * `ATE` uses the R packages `Rcpp` and `RcppArmadillo` to improve run-time. This allows us to handle big data efficiently.
 Below we present the example for 10,000 observations and 800 covariates on an Intel® Core™ i5-3337U Processor.
 ```R
-n<- 10000
-X1<- matrix(rnorm(n*500), ncol = 500)
-X2<- matrix(rbinom(300*n, 1, 0.4), ncol = 300)
-X<- cbind(X1, X2)
-prop <- 1 / (1 + exp( X[,1] - 0.5*X[,2] + 0.25*X[,3] +  X[,6] + 0.5*X[,8] ) )
+n <- 10000
+X1 <- matrix(rnorm(n * 500), ncol = 500)
+X2 <- matrix(rbinom(300 * n, 1, 0.4), ncol = 300)
+X <- cbind(X1, X2)
+prop <- 1 / (1 + exp( X[, 1] - 0.5 * X[, 2] + 0.25 * X[, 3] +  X[, 6] + 0.5 * X[, 8]))
 treat<- rbinom(n, 1, prop)
-Y<-  10*treat+ (2*treat-1)*(X[,1] - 0.5*X[,2] + 0.25*X[,3] +  X[,6] + 0.5*X[,8]) + rnorm(n)
+Y<-  10 * treat + (2 * treat - 1) * 
+     (X[, 1] - 0.5 * X[, 2] + 0.25 * X[, 3] + X[, 6] + 0.5 * X[, 8]) +
+     rnorm(n)
 
-system.time(fit4<-ATE(Y,treat,X))
+system.time(fit4 <- ATE(Y, treat, X))
    user  system elapsed 
   80.86    2.04   87.55
 ```
