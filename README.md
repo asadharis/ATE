@@ -11,6 +11,8 @@ The package also allows inference by consistent variance estimates.
 - `RcppArmadillo`
 - `Matrix`
 
+#####Updates
+- 2015/09/13 Version 0.4.0 introduced. Source code annotated using Google R style guide.
 
 -------------------------------------------------------------------------
 
