@@ -2,10 +2,10 @@
 \alias{nsw}
 \docType{data}
 \title{
-Lalonde subsample of the National Supported Work Demonstration Data (NSW)
+Lalonde Subsample of the National Supported Work Demonstration Data (NSW)
 }
 \description{
-This data was collected to evaluate the National Supported Work (NSW) Demonstration project in Lalonde (1986). 
+This data was collected to evaluate the National Supported Work (NSW) Demonstration project in Lalonde (1986).
 }
 \usage{data(nsw)}
 
@@ -46,18 +46,16 @@ Dehejia R. and Wahba S. (1999). "Causal Effects in Non-Experimental Studies: Re-
 
 \examples{
 library(ATE)
-#NSW Data example
+# NSW Data example
 data("nsw")
 
-Y<- nsw$re78
-X<- nsw[,c(-1,-9)]
-Ti<- nsw$treat
+Y <- nsw$re78
+X <- nsw[, c(-1, -9)]
+treat <- nsw$treat
 
-fit1<- ATE(Y,Ti,X)
+fit1 <- ATE(Y, treat, as.matrix(X))
 fit1
 summary(fit1)
-#plot(fit1)
-
-
+# plot(fit1)
 }
 \keyword{datasets}

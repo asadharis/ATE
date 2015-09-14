@@ -38,16 +38,14 @@ Data adapted from the 2007-2008 National Health and Nutrition Examination Survey
 library(ATE)
 data("nhanes_bmi")
 
-Y<-nhanes_bmi[,1]
-treat<-nhanes_bmi[,2]
-X<-nhanes_bmi[,-c(1,2)]
-X<- as.matrix(X)
+Y <- nhanes_bmi[, 1]
+treat <- nhanes_bmi[, 2]
+X <- nhanes_bmi[, -c(1, 2)]
+X <- as.matrix(X)
 
-fit1<- ATE(Y,treat,X)
+fit1 <- ATE(Y, treat, X)
 fit1
 summary(fit1)
-#plot(fit1)
-
-
+# plot(fit1)
 }
 \keyword{datasets}

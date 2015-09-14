@@ -12,8 +12,8 @@ This package provides a user-friendly interface for nonparametric efficient infe
 \tabular{ll}{
 Package: \tab ATE\cr
 Type: \tab Package\cr
-Version: \tab 0.3.2\cr
-Date: \tab 2015-09-12\cr
+Version: \tab 0.4.0\cr
+Date: \tab 2015-09-13\cr
 License: \tab GPL (>= 2) \cr
 }
 
@@ -21,9 +21,8 @@ The package includes the following functions:
 
 \tabular{ll}{
 \code{\link{ATE}}: \tab Estimate the average treatment effect \cr
-\code{\link{summary.ATE}}: \tab \code{summary} method for class \code{"ATE"} \cr
-\code{\link{plot.ATE}}: \tab Plot function for class "RIPW" \cr
-
+\code{\link{summary.ATE}}: \tab \code{summary} method for class \code{'ATE'} \cr
+\code{\link{plot.ATE}}: \tab Plot function for class \code{'ATE'} \cr
 }
 }
 
@@ -42,5 +41,5 @@ Chan, K. C. G. and Yam, S. C. P. and Zhang, Z. (2015). "Globally Efficient Nonpa
 \code{\link{ATE}},
 \code{\link{summary.ATE}},
 \code{\link{plot.ATE}},
-\code{\link{cpp_cr_rho}}
+\code{\link{CRFamily}}
 }

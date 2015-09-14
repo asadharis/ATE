@@ -1,19 +1,21 @@
-\name{Cressie and Read objective functions}
+\name{CRFamily}
 \alias{Cressie and Read function}
 \alias{CRFamily}
 \alias{CRFamilyDerivative}
 \alias{CRFamilySecondDerivative}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Cressie and Read objective functions
+Cressie and Read Family of Functions
 }
 \description{
-Cressie and Read class of objective functions parameterized by a scalar \eqn{\theta}.
+Cressie and Read class of functions parameterized by a scalar \eqn{\theta} used
+within this package. In our case, we use a slight modification of the original
+CR Family of functions, see details.
 }
 \usage{
-CRFamily(x,theta)
-CRFamilyDerivative(x,theta)
-CRFamilySecondDerivative(x,theta)
+CRFamily(x, theta)
+CRFamilyDerivative(x, theta)
+CRFamilySecondDerivative(x, theta)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -26,12 +28,13 @@ A user defined value for \eqn{\theta}{\theta}. This must be a scalar. See detail
 }
 \details{
 This set of functions can be used for the main \code{\link{ATE}} function for the arguments \code{theta}. The class of functions, are defined by (see Cressie and Read (1984))
-\deqn{\rho(x) = -(1+\theta x)^{(\theta+1)/\theta}/(\theta+1) ,}
+\deqn{\rho(x) = -\frac{ (1 + \theta x) ^ {(\theta + 1) / \theta} }{
+        \theta+1} ,}{\rho(x) = -(1 + \theta x)^{(\theta + 1) / \theta}/(\theta + 1) ,}
 where \eqn{\theta} is scalar.  The expression is interpreted as limits for \eqn{\theta = 0} or  \eqn{\theta = -1} (see Newey and Smith (2004)).
 
 For this package we use the modified version
-\deqn{\rho(x) = -(1-\theta x)^{(\theta+1)/\theta}/(\theta+1) ,}
-which led to better performance based on empirical simulations.
+\deqn{\rho(x) = -\frac{(1-\theta x)^{(\theta+1)/\theta} }{\theta+1} , }{\rho(x) = -(1-\theta x)^{(\theta+1)/\theta}/(\theta+1) ,}
+which leads to greater computational stability (based on empirical simulations).
 }
 \value{
 The output of the real values function for a given parameter \eqn{\theta}{\theta}.
@@ -52,19 +55,19 @@ Asad Haris, Gary Chan
 }
 
 \examples{
-#Cressie-Read Family example
+# Cressie-Read Family example
 data("nsw")
-Y<-nsw$re78
-X<-nsw[,-c(1,9)]
-X<- as.matrix(X)
-treat<-nsw$treat
+Y <- nsw$re78
+X <- nsw[, -c(1, 9)]
+X <- as.matrix(X)
+treat <- nsw$treat
 
-#Exponential tilting
-ATE(Y,treat,X,theta = 0)
+# Exponential tilting.
+ATE(Y, treat, X, theta = 0)
 
-#Empirical likelihood
-ATE(Y,treat,X,theta = -1)
+# Empirical likelihood.
+ATE(Y, treat, X, theta = -1)
 
-#Quadratic loss
-ATE(Y,treat,X, theta = 1)
+# Quadratic loss.
+ATE(Y, treat, X, theta = 1)
 }
