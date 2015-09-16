@@ -29,9 +29,6 @@ ATE <- function(Y, treat, X, theta = 1, ATT = FALSE,
 
   # J is the number treatment arms
   J <- length(unique(treat))
-  # The totoal length of the parameter vector Recall:
-  #Using the notation of the Package Vignette we have u_K(X) = cbind(1,X).
-  K <- ncol(X) + 1
 
   # In some cases if we have a data.frame we need
   # to convert it into a numeric matrix
@@ -43,6 +40,10 @@ ATE <- function(Y, treat, X, theta = 1, ATT = FALSE,
     X <- matrix(X, ncol = 1, nrow = length(X))
     warning("Data matrix 'X' is a vector, will be treated as n x 1 matrix.")
   }
+  # The totoal length of the parameter vector Recall:
+  #Using the notation of the Package Vignette we have u_K(X) = cbind(1,X).
+  K <- ncol(X) + 1
+
   # Some simple checks before running the main functions
   if (nrow(X) != length(Y)) {
     stop("Dimensions of covariates and response do not match.")
