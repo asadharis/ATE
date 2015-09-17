@@ -390,7 +390,7 @@ plot.ATE <- function(x, ...) {
              pch = 16, cex = 1.5, ylim = c(0, 1),
           ylab = "Mean of group", xlab = "",
           col = c("blue", "red"), main = "Weighted", xaxt = "n")
-        axis(side = 1, at = c(1, 2), labels = c("Treatment", "Control"))
+        axis(side = 1, at = c(1, 2), labels = c("Treatment", "Placebo"))
         if (ATT) {
           abline(h = mean(Treatment), lty = 2)
         } else {
@@ -414,7 +414,7 @@ plot.ATE <- function(x, ...) {
              main = "Unweighted empirical CDF")
         lines(my.seq, ecdf.placebo, cex = 0.4,
               pch = 16, lty = 2, col = "blue")
-        legend("bottomright", c("Treatment", "Control"),
+        legend("bottomright", c("Treatment", "Placebo"),
                lty = c(1, 2), col = c("red", "blue"))
 
         # Now we plot the weighted eCDF
