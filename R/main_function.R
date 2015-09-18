@@ -369,7 +369,7 @@ plot.ATE <- function(x, ...) {
              pch = 16, cex = 1.5, ylim = c(0, 1),
              ylab = "Mean of group",
              xlab = "", col = c("blue", "red"),
-             main = "Unweighted", xaxt = "n")
+             main = paste0("Unweighted; variable: ", names[i]), xaxt = "n")
         axis(side = 1, at = c(1, 2),
              labels = c("Treatment", "Placebo"))
         if (ATT) {
@@ -389,7 +389,8 @@ plot.ATE <- function(x, ...) {
         plot(c(0.5, 1, 2, 2.5), c(2, new.treat, new.placebo, 2),
              pch = 16, cex = 1.5, ylim = c(0, 1),
           ylab = "Mean of group", xlab = "",
-          col = c("blue", "red"), main = "Weighted", xaxt = "n")
+          col = c("blue", "red"), main = paste0("Weighted; variable: ", names[i]),
+          xaxt = "n")
         axis(side = 1, at = c(1, 2), labels = c("Treatment", "Placebo"))
         if (ATT) {
           abline(h = mean(Treatment), lty = 2)
@@ -465,7 +466,8 @@ plot.ATE <- function(x, ...) {
         plot(c(0:(J - 1)), c(mean(x$X[treat == 0, i]), rep(2, J - 1)),
              pch = 16, cex = 1.5, ylim = c(0, 1),
              ylab = "Mean of group", xlab = "Treatment group",
-             col = 1, main = "Unweighted", xaxt = "n",
+             col = 1, main = paste0("Unweighted; variable: ", names[i]),
+             xaxt = "n",
              xlim = c(-0.5, J - 1 + 0.5))
         axis(side = 1, at = 0:(J - 1), labels = paste(0:(J - 1)))
         abline(h = mean(x$X[, i]), lty = 2)
@@ -480,7 +482,8 @@ plot.ATE <- function(x, ...) {
              c(sum(x$X[treat == 0, i] * weights.mat[1, treat == 0]),
              rep(2, J - 1)), pch = 16, cex = 1.5,
              ylim = c(0, 1), ylab = "Mean of group",
-             xlab = "Treatment group", col = 1, main = "Weighted",
+             xlab = "Treatment group", col = 1,
+             main = paste0("Weighted; variable: ", names[i]),
              xaxt = "n", xlim = c(-0.5, J - 1 + 0.5))
         axis(side = 1, at = 0:(J - 1), labels = paste(0:(J - 1)))
         abline(h = mean(x$X[, i]), lty = 2)
