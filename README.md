@@ -5,18 +5,32 @@ treatment effects for observational data. The package provides point estimates f
 effects, average treatment effect on the treated and can also handle the case of multiple treatments.
 The package also allows inference by consistent variance estimates.
 
-#####Requirements
+#### Requirements
 - `R (>=3.2.0)`
 - `Rcpp (>=0.12.0)`
 - `RcppArmadillo`
 - `Matrix`
 
-#####Updates
+#### Updates
 - 2015/09/13 Version 0.4.0 introduced. Source code annotated using Google R style guide.
 
 -------------------------------------------------------------------------
+## Installation
 
-##Key Features
+The package can be installed from CRAN:
+```R
+install.packages("ATE")
+```
+
+Alternatively, we can directly install from Github using the `devtools` package:
+```R
+library(devtools)
+install_github("asadharis/ATE")
+```
+
+
+
+## Key Features
 * Ease of use: The main function `ATE` requires only a numeric matrix `X` of covariates, numeric vector `Y` of response 
 and `treat` vector indicating treatment assignment.
 ```R
