@@ -40,15 +40,13 @@ which leads to greater computational stability (based on empirical simulations).
 The output of the real values function for a given parameter \eqn{\theta}{\theta}.
 }
 \references{
-Chan, K. C. G. and Yam, S. C. P. and Zhang, Z. (2015). "Globally Efficient Nonparametric Infernence of Average Treatment Effects by Emperical Balancing Calibration Weighting", under revision.
+Chan, K. C. G., Yam, S. C. P., & Zhang, Z. (2016). Globally efficient non-parametric inference of average treatment effects by empirical balancing calibration weighting. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 78(3), 673-700. \doi{10.1111/rssb.12129}
 
 Chan, K. C. G. and Yam, S. C. P. (2014). "Oracle, Multiple Robust and Multipurpose Calibration in a Missing Response Problem".  Statistical Science 29 (3): 380-386.
 
 Cressie, N. and Read, T. R. C. (1984). "Multinomial goodness-of-fit tests".  J. Roy. Statist. Soc. Ser. B 46 440-464.
 
-Newey, W. K. and Smith, R. J. (2004). Higher order properties
-of GMM and generalized empirical likelihood estimators.
-Econometrica 72 219-255.
+Newey, W. K. and Smith, R. J. (2004). Higher order properties of GMM and generalized empirical likelihood estimators. Econometrica 72 219-255.
 }
 \author{
 Asad Haris, Gary Chan
