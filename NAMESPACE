@@ -1,11 +1,14 @@
 useDynLib(ATE)
-importFrom(Rcpp, evalCpp)
 import(Matrix)
 
-export(ATE,  CRFamily, CRFamilyDerivative, CRFamilySecondDerivative)
+importFrom("Rcpp", "evalCpp")
+importFrom("graphics", "abline", "axis", "legend", "lines", "par", "points")
+importFrom("stats", "pnorm", "printCoefmat", "qnorm",
+           "contrasts", "model.matrix", "reformulate")
+
+export(ATE, CRFamily, CRFamilyDerivative, CRFamilySecondDerivative)
 S3method(print, ATE)
 S3method(summary, ATE)
 S3method(plot, ATE)
-
 S3method(print, summary.ATE)
 
