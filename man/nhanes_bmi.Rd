@@ -35,13 +35,11 @@ Data adapted from the 2007-2008 National Health and Nutrition Examination Survey
 
 
 \examples{
-library(ATE)
 data("nhanes_bmi")
 
 Y <- nhanes_bmi[, 1]
 treat <- nhanes_bmi[, 2]
 X <- nhanes_bmi[, -c(1, 2)]
-X <- as.matrix(X)
 
 fit1 <- ATE(Y, treat, X)
 fit1

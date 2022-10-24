@@ -5,18 +5,9 @@
 Nonparametric efficient inference of the average treatment effects for observational data
 }
 \description{
-This package provides a user-friendly interface for nonparametric efficient inference of average treatment effects for observational data. The package provides point estimates for average treatment effects, average treatment effect on the treated and can also handle the case of multiple treatments. The package also allows inference by consistent variance estimates. The point estimates for the treatment effect and variance estimates are described in Chan et al. (2015).
+This package provides a user-friendly interface for nonparametric efficient inference of average treatment effects for observational data. The package provides point estimates for average treatment effects, average treatment effect on the treated and can also handle the case of multiple treatments. The package also allows inference by consistent variance estimates. The point estimates for the treatment effect and variance estimates are described in Chan et al. (2016).
 }
 \details{
-
-\tabular{ll}{
-Package: \tab ATE\cr
-Type: \tab Package\cr
-Version: \tab 0.4.0\cr
-Date: \tab 2015-09-13\cr
-License: \tab GPL (>= 2) \cr
-}
-
 The package includes the following functions:
 
 \tabular{ll}{
@@ -33,7 +24,7 @@ Maintainer: Asad Haris <aharis@uw.edu>
 }
 
 \references{
-Chan, K. C. G. and Yam, S. C. P. and Zhang, Z. (2015). "Globally Efficient Nonparametric Inference of Average Treatment Effects by Empirical Balancing Calibration Weighting", under review.
+Chan, K. C. G., Yam, S. C. P., & Zhang, Z. (2016). Globally efficient non-parametric inference of average treatment effects by empirical balancing calibration weighting. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 78(3), 673-700. \doi{10.1111/rssb.12129}
 }
 
 \keyword{ package }

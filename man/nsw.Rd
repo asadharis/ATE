@@ -45,15 +45,14 @@ Dehejia R. and Wahba S. (1999). "Causal Effects in Non-Experimental Studies: Re-
 
 
 \examples{
-library(ATE)
 # NSW Data example
 data("nsw")
 
 Y <- nsw$re78
-X <- nsw[, c(-1, -9)]
+X <- nsw[, -c(1, 9)]
 treat <- nsw$treat
 
-fit1 <- ATE(Y, treat, as.matrix(X))
+fit1 <- ATE(Y, treat, X)
 fit1
 summary(fit1)
 # plot(fit1)

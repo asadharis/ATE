@@ -78,7 +78,7 @@ GetPointEstSimple <- function(initial.one, initial.two, ...) {
 
   # Throw a warning if algorithm did not converge.
   converge = TRUE
-  if (!treatment.hat$converge | !placebo.hat$converge) {
+  if (!treatment.hat$converge || !placebo.hat$converge) {
     warning("BFGS Algorithm did not converge for atleast one objective function.")
     converge <- FALSE
   }

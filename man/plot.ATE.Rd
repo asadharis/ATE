@@ -31,7 +31,6 @@ Asad Haris, Gary Chan
 \code{\link{ATE}}
 }
 \examples{
-library(ATE)
 # Binary treatment.
 set.seed(25)
 n <- 200
@@ -46,15 +45,15 @@ X <- cbind(exp(Z[, 1]) / 2, Z[, 2] / (1 + exp(Z[, 1])),
 # Estimation of average treatment effects (ATE).
 fit1 <- ATE(Y, treat, X)
 summary(fit1)
-## NOT RUN
-# plot(fit1)
-
+\dontrun{
+plot(fit1)
+}
 # Estimation of average treatment effects on treated (ATT).
 fit2 <- ATE(Y, treat, X, ATT = TRUE)
 summary(fit2)
-## NOT RUN
-# plot(fit2)
-
+\dontrun{
+plot(fit2)
+}
 
 # Four treatment groups.
 set.seed(25)
@@ -75,6 +74,7 @@ X <- cbind(exp(Z[, 1]) / 2, Z[, 2] / (1 + exp(Z[, 1])),
 
 fit3 <- ATE(Y, treat, X)
 summary(fit3)
-## NOT RUN
-# plot(fit3)
+\dontrun{
+plot(fit3)
+}
 }

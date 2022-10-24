@@ -16,7 +16,7 @@ algorithm with backtracking. For details of the estimator
 see Chan et al. (2015).
 }
 \usage{
-ATE (Y, treat, X, theta = 1, ATT = FALSE,
+ATE(Y, treat, X, theta = 1, ATT = FALSE,
     verbose = FALSE, max.iter = 100, tol = 1e-10,
     initial.values = NULL,
     backtrack.alpha = 0.3,
@@ -35,7 +35,7 @@ coded as \eqn{0, 1, \ldots}{\{0, 1, ...\}} and must be binary
 vector when \code{ATT = TRUE}.
 }
  \item{X}{
-A \eqn{N \times p}{N x p}-matrix of covariates \code{X} to be matched.
+A \eqn{N \times p}{N x p}-matrix or data frame of covariates \code{X} to be balanced.
 This matrix does not need to include an intercept.
 }
 \item{theta}{
@@ -78,7 +78,7 @@ with \eqn{\beta \in (0,1)}{\beta in (0,1)}.
 
 \value{
 %%  ~Describe the value returned
-The function reruns an object of type \code{'ATE'}, a list with the following elements
+The function returns an object of type \code{'ATE'}, a list with the following elements:
 
 \item{estimate}{
 The vector of point estimates for the average treatment effect.
@@ -100,8 +100,8 @@ we have \code{lam.mat}, a matrix with each row for each
 \item{weights}{
 The weights obtained by the balancing covariate method for each
 treatment group. In the case of \code{ATT = TRUE}, we only have weights for
-the untreated. For binary treatment the list will have \code{weights.treat} and
-\code{weights.placebo}. For multiple treatment effect the list contains
+the untreated (\code{weights.placebo}). For binary treatments the list will have \code{weights.treat} and
+\code{weights.placebo}. For multiple treatments the list contains
 a \eqn{J\times N} matrix \code{weights.mat}.
 }
 \item{gp}{
@@ -130,7 +130,7 @@ The matched call.
 }
 
 \references{
-Chan, K. C. G. and Yam, S. C. P. and Zhang, Z. (2015). "Globally Efficient Nonparametric Inference of Average Treatment Effects by Empirical Balancing Calibration Weighting", under revision.
+Chan, K. C. G., Yam, S. C. P., & Zhang, Z. (2016). Globally efficient non-parametric inference of average treatment effects by empirical balancing calibration weighting. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 78(3), 673-700. \doi{10.1111/rssb.12129}
 
 Haris, Asad and Chan, K. C. G. (2015). "\pkg{ATE}: An \code{R} package for Nonparametric Inference of Average Treatment Effects", under revision
 }

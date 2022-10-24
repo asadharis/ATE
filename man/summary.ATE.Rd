@@ -59,7 +59,6 @@ Asad Haris, Gary Chan
 \code{\link{ATE}}
 }
 \examples{
-library(ATE)
 # Binary treatment.
 set.seed(25)
 n <- 200

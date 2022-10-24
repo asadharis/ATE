@@ -1,0 +1,118 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  tidy = FALSE,
+  fig.align='center',
+  comment = "#>",
+  fig.path = "man/figures/README-"
+)
+```
+
+# R package: ATE
+
+The main aim of `ATE` is to provide a user-friendly interface for nonparametric efficient inference of average 
+treatment effects for observational data. The package provides point estimates for average treatment 
+effects, average treatment effect on the treated and can also handle the case of multiple treatments.
+The package also allows inference by consistent variance estimates.
+
+#### Requirements
+- `R (>=3.2.0)`
+- `Rcpp (>=0.12.0)`
+- `RcppArmadillo`
+- `Matrix`
+
+## Installation
+
+The package can be installed from CRAN:
+```{r, eval = FALSE}
+install.packages("ATE")
+```
+
+Alternatively, we can directly install from Github using the `devtools` package:
+
+```{r, eval = FALSE}
+devtools::install_github("asadharis/ATE")
+```
+
+## Key Features
+* Ease of use: The main function `ATE` requires only a numeric matrix `X` of covariates, numeric vector `Y` of response 
+and `treat` vector indicating treatment assignment.
+```{r}
+set.seed(1)
+library(ATE)
+
+#Generate some data
+n <- 500
+X1 <- matrix(rnorm(n * 5), ncol = 5)
+X2 <- matrix(rbinom(3 * n, 1, 0.4), ncol = 3)
+X <- cbind(X1, X2)
+prop <- 1 / (1 + exp(X[, 1] - 0.5 * X[, 2] + 0.25 * X[, 3] + X[, 6] + 0.5 * X[, 8]))
+treat <- rbinom(n, 1, prop)
+Y <- 10 * treat + (2 * treat - 1) *
+  (X[, 1] - 0.5 * X[, 2] + 0.25 * X[, 3] + X[, 6] + 0.5 * X[, 8]) + rnorm(n)
+
+#Fit ATE object
+fit1 <- ATE(Y, treat, X)
+summary(fit1)
+```
+
+* `plot` function for demonstrating effect of covariate balancing for continuous and binary 
+covariates.
+
+```{r,fig.keep=c(1,6)}
+plot(fit1)
+```
+
+* We can also estimate the average treatment effect on the treated. 
+
+```{r}
+fit2 <- ATE(Y, treat, X, ATT = TRUE)
+summary(fit2)
+```
+
+* `ATE` automatically detects and estimates the case of multiple treatment arms. 
+
+```{r}
+treat <- rbinom(n, 3, prop)
+Y <- 10 * treat + (2 * treat - 1) *
+     (X[, 1] - 0.5 * X[, 2] + 0.25 * X[, 3] + X[, 6] + 0.5 * X[, 8]) +
+     rnorm(n)
+fit3 <- ATE(Y,treat,X)
+summary(fit3)
+```
+
+```{r,fig.keep=c(1,6)}
+plot(fit3)
+```
+
+* `ATE` uses the R packages `Rcpp` and `RcppArmadillo` to improve run-time. This allows us to handle big data efficiently.
+
+Below we present the example for 10,000 observations and 800 covariates on an Intel® Core™ i5-3337U Processor.
+
+```{r}
+n <- 10000
+X1 <- matrix(rnorm(n * 500), ncol = 500)
+X2 <- matrix(rbinom(300 * n, 1, 0.4), ncol = 300)
+X <- cbind(X1, X2)
+prop <- 1 / (1 + exp( X[, 1] - 0.5 * X[, 2] + 0.25 * X[, 3] +  X[, 6] + 0.5 * X[, 8]))
+treat <- rbinom(n, 1, prop)
+Y <- 10 * treat + (2 * treat - 1) * 
+  (X[, 1] - 0.5 * X[, 2] + 0.25 * X[, 3] + X[, 6] + 0.5 * X[, 8]) +
+  rnorm(n)
+
+system.time({
+  fit4 <- ATE(Y, treat, X)
+})
+```
+
+## Acknowledgements 
+
+I would like to express my deep gratitude to Professor Gary Chan, my research supervisor, for his patient guidance, enthusiastic encouragement and useful critiques of this project.
