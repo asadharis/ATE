@@ -192,6 +192,7 @@ ATE <- function(Y, treat, X, theta = 1, ATT = FALSE,
 
   # Rename some of the elements of the list and organize the output object
   if (gp == "simple") {
+    res$weights <- drop(res$weights.treat + res$weights.placebo)
     estimate <- c(res$tau.one, res$tau.zero, res$tau)
     names(estimate) <- c("E[Y(1)]", "E[Y(0)]", "ATE")
     res$estimate <- estimate
@@ -199,6 +200,7 @@ ATE <- function(Y, treat, X, theta = 1, ATT = FALSE,
     res$tau.zero <- NULL
     res$tau <- NULL
   } else if (gp == "ATT") {
+    res$weights <- drop(treat + res$weights.placebo)
     estimate <- c(res$tau.one, res$tau.zero, res$tau)
     names(estimate) <- c("E[Y(1)|T=1]", "E[Y(0)|T=1]", "ATT")
     res$estimate <- estimate
@@ -206,6 +208,7 @@ ATE <- function(Y, treat, X, theta = 1, ATT = FALSE,
     res$tau.zero <- NULL
     res$tau <- NULL
   } else {
+    res$weights <- colSums(res$weights.mat)
     estimate <- res$tau.treatment.j
     names(estimate) <- paste("E[Y(", 0:(J - 1), ")]", sep = "")
     res$estimate <- estimate
@@ -422,7 +425,7 @@ plot.ATE <- function(x, ...) {
         } else {
           abline(h = mean(x$X[[i]]), lty = 2)
         }
-        # Now for the weighed means for treatment and placebo group.
+        # Now for the weighted means for treatment and placebo group.
         if (!ATT) {
           new.treat <- sum(weights.treat * Treatment)
         } else {

@@ -100,8 +100,8 @@ we have \code{lam.mat}, a matrix with each row for each
 \item{weights}{
 The weights obtained by the balancing covariate method for each
 treatment group. In the case of \code{ATT = TRUE}, we only have weights for
-the untreated. For binary treatment the list will have \code{weights.treat} and
-\code{weights.placebo}. For multiple treatment effect the list contains
+the untreated (\code{weights.placebo}). For binary treatments the list will have \code{weights.treat} and
+\code{weights.placebo}. For multiple treatments the list contains
 a \eqn{J\times N} matrix \code{weights.mat}.
 }
 \item{gp}{
