@@ -32,15 +32,49 @@ ATE <- function(Y, treat, X, theta = 1, ATT = FALSE,
 
   # In some cases if we have a data.frame we need
   # to convert it into a numeric matrix
-  if (class(X) == "data.frame") {
+  X_original <- X
+  if (is.data.frame(X)) {
+    if (any(vapply(X, function(x) !is.numeric(x), logical(1L)))) {
+      for (i in names(X)) {
+        if (is.character(X[[i]])) {
+          X[[i]] <- factor(X[[i]])
+          X_original[[i]] <- X[[i]]
+        }
+        if (is.factor(X[[i]])) {
+          new <- model.matrix(reformulate(i), data = X)[,-1, drop = FALSE]
+          if (i == names(X)[1L]) {
+            X <- cbind(as.data.frame(new), X[,-1,drop = FALSE])
+          }
+          else if (i == names(X)[ncol(X)]) {
+            X <- cbind(X[,-ncol(X), drop = FALSE], as.data.frame(new))
+          }
+          else {
+            X <- cbind(X[,1:(which(names(X) == i) - 1)],
+                       as.data.frame(new),
+                       X[,(which(names(X) == i) + 1):ncol(X), drop = FALSE])
+          }
+        }
+        else {
+          X[[i]] <- as.numeric(X[[i]])
+        }
+      }
+    }
     X <- as.matrix(X)
   }
   # Take care of the case of a single covariate
-  if (is.vector(X)) {
+  else if (is.numeric(X) && length(dim(X)) != 2L) {
+    warning("Data matrix 'X' is a vector, will be treated as n x 1 matrix.",
+            immediate. = TRUE)
     X <- matrix(X, ncol = 1, nrow = length(X))
-    warning("Data matrix 'X' is a vector, will be treated as n x 1 matrix.")
+    X_original <- as.data.frame(X)
   }
-  # The totoal length of the parameter vector Recall:
+  else if (is.matrix(X)) {
+    X_original <- as.data.frame(X)
+  }
+  else {
+    stop("Data matrix 'X' must be a data.frame or matrix.")
+  }
+  # The total length of the parameter vector Recall:
   #Using the notation of the Package Vignette we have u_K(X) = cbind(1,X).
   K <- ncol(X) + 1
 
@@ -51,7 +85,7 @@ ATE <- function(Y, treat, X, theta = 1, ATT = FALSE,
   if (J == 1) {
     stop("There must be atleast two treatment arms")
   }
-  if (!all(0:(J - 1) == sort(unique(treat)))) {
+  if (!all(unique(treat) %in% 0:(J - 1))) {
     stop("The treatment levels must be labelled 0,1,2,...")
   }
   if (!is.numeric(theta)) {
@@ -61,7 +95,7 @@ ATE <- function(Y, treat, X, theta = 1, ATT = FALSE,
     stop("For ATT == TRUE, must have only 2 treatment arms.")
   }
 
-  # If the inital values are not
+  # If the initial values are not
   # provided we generate simple initial parameters.
   if (is.null(initial.values)) {
     if (ATT) {
@@ -147,7 +181,7 @@ ATE <- function(Y, treat, X, theta = 1, ATT = FALSE,
   # Begin building the 'ATE' object.
   res <- est
   res$vcov<- cov.mat
-  res$X <- X
+  res$X <- X_original
   res$Y <- Y
   res$treat <- treat
   res$theta <- theta
@@ -214,6 +248,7 @@ print.ATE <- function(x, ...) {
     cat("\nPoint Estimates:\n")
     print(x$estimate)
   }
+  invisible(x)
 }
 
 summary.ATE <- function(object, ...) {
@@ -292,6 +327,7 @@ print.summary.ATE <- function(x, ...) {
   print(x$call)
   cat("\n")
   printCoefmat(x$Estimate, P.values = TRUE, has.Pvalue = TRUE)
+  invisible(x)
 }
 
 ################################################
@@ -327,6 +363,15 @@ plot.ATE <- function(x, ...) {
 
   treat <- x$treat
 
+  # Split factor variables into dummies
+  if (any(vapply(x$X, function(x) !is.numeric(x), logical(1L)))) {
+    x$X <- as.data.frame(
+      model.matrix(reformulate(names(x$X)), data = x$X,
+                   contrasts.arg = lapply(Filter(is.factor, x$X), contrasts,
+                                          contrasts = FALSE))
+    )[,-1, drop = FALSE]
+  }
+
   ################## Case 1: Binary treatment###################
 
   if (x$gp == "simple" || x$gp == "ATT") {
@@ -347,8 +392,8 @@ plot.ATE <- function(x, ...) {
     }
 
     # Obtain the subsample of subjects for each treatment arm
-    x.treat <- as.matrix(x$X[treat == 1, ])
-    x.placebo <- as.matrix(x$X[treat == 0, ])
+    x.treat <- x$X[treat == 1,]
+    x.placebo <- x$X[treat == 0,]
     for (i in 1:ncol(x.treat)) {
       # Plot the first covariate Allow user to
       # sequentially view subsequent plots
@@ -357,25 +402,25 @@ plot.ATE <- function(x, ...) {
       }
 
       # A special plot function for binary covariates
-      if (length(unique(x$X[, i])) == 2) {
-        Treatment <- x.treat[, i]
-        Placebo <- x.placebo[, i]
+      if (length(unique(x$X[[i]])) == 2) {
+        Treatment <- x.treat[[i]]
+        Placebo <- x.placebo[[i]]
         # First plot the unweighted case.
         # This function plots the means for each treatment.
         par(mfrow = c(1, 2))
         # Plot dots for the mean for treatment and placebo at
         # position 1 and 2.
         plot(c(0.5, 1, 2, 2.5), c(2, mean(Treatment), mean(Placebo), 2),
-             pch = 16, cex = 1.5, ylim = c(0, 1),
+             pch = 16, cex = 1.5, ylim = range(x$X[[i]]),
              ylab = "Mean of group",
              xlab = "", col = c("blue", "red"),
-             main = paste0("Unweighted; variable: ", names[i]), xaxt = "n")
+             main = paste0("Unweighted\n", names[i]), xaxt = "n")
         axis(side = 1, at = c(1, 2),
              labels = c("Treatment", "Placebo"))
         if (ATT) {
           abline(h = mean(Treatment), lty = 2)
         } else {
-          abline(h = mean(x$X[, i]), lty = 2)
+          abline(h = mean(x$X[[i]]), lty = 2)
         }
         # Now for the weighed means for treatment and placebo group.
         if (!ATT) {
@@ -387,54 +432,56 @@ plot.ATE <- function(x, ...) {
         # Again, we plot the means for each treatment group at
         # position 1 and 2.
         plot(c(0.5, 1, 2, 2.5), c(2, new.treat, new.placebo, 2),
-             pch = 16, cex = 1.5, ylim = c(0, 1),
+             pch = 16, cex = 1.5, ylim = range(x$X[[i]]),
           ylab = "Mean of group", xlab = "",
-          col = c("blue", "red"), main = paste0("Weighted; variable: ", names[i]),
+          col = c("blue", "red"), main = paste0("Weighted\n", names[i]),
           xaxt = "n")
         axis(side = 1, at = c(1, 2), labels = c("Treatment", "Placebo"))
         if (ATT) {
           abline(h = mean(Treatment), lty = 2)
         } else {
-          abline(h = mean(x$X[, i]), lty = 2)
+          abline(h = mean(x$X[[i]]), lty = 2)
         }
 
       } else { # Plot for continuous covariates.
 
         # Obtain the range and initialize a
-        # sequene at which we will plot the CDF.
-        my.range <- range(c(x.treat[, i], x.placebo[, i]))
-        my.seq <- seq(my.range[1], my.range[2], length = 100)
-        ecdf.treat <- sapply(my.seq, weighted.ecdf, x = x.treat[, i])
-        ecdf.placebo <- sapply(my.seq, weighted.ecdf, x = x.placebo[, i])
+        # sequence at which we will plot the CDF.
+        # my.range <- range(x$X[[i]])
+        # my.seq <- seq(my.range[1], my.range[2], length = 100)
+        my.seq <- sort(unique(x$X[[i]]))
+
+        ecdf.treat <- sapply(my.seq, weighted.ecdf, x = x.treat[[i]])
+        ecdf.placebo <- sapply(my.seq, weighted.ecdf, x = x.placebo[[i]])
 
         # Plot the unweighted empirical CDF for each case
         par(mfrow = c(1, 2))
         plot(my.seq, ecdf.treat, cex = 0.4, pch = 16,
-             type = "l", lty = 1, col = "red",
+             type = "s", lty = 1, col = "red",
              xlab = names[i], ylab = "empirical CDF",
              main = "Unweighted empirical CDF")
         lines(my.seq, ecdf.placebo, cex = 0.4,
-              pch = 16, lty = 2, col = "blue")
+              type = "s", pch = 16, lty = 2, col = "blue")
         legend("bottomright", c("Treatment", "Placebo"),
                lty = c(1, 2), col = c("red", "blue"))
 
         # Now we plot the weighted eCDF
         if (!ATT) {
           weighted.ecdf.treat <- sapply(my.seq, weighted.ecdf,
-                                        x = x.treat[, i],
+                                        x = x.treat[[i]],
                                         weights = weights.treat)
         } else {
           weighted.ecdf.treat <- ecdf.treat
         }
         weighted.ecdf.placebo <- sapply(my.seq, weighted.ecdf,
-                                        x = x.placebo[, i],
+                                        x = x.placebo[[i]],
                                         weights = weights.placebo)
         plot(my.seq, weighted.ecdf.treat, cex = 0.4, pch = 16,
-             type = "l", lty = 1, col = "red",
-             xlab = names[i], ylab = "emperical CDF",
-             main = "Weighted emperical CDF")
+             type = "s", lty = 1, col = "red",
+             xlab = names[i], ylab = "Empirical CDF",
+             main = "Weighted Empirical CDF")
         lines(my.seq, weighted.ecdf.placebo, cex = 0.4,
-              pch = 16, lty = 2, col = "blue")
+              type = "s", pch = 16, lty = 2, col = "blue")
       }
     }
     par(ask = FALSE)
@@ -459,72 +506,73 @@ plot.ATE <- function(x, ...) {
       }
 
       # Again, for binary covariates first.
-      if (length(unique(x$X[, i])) == 2) {
+      if (length(unique(x$X[[i]])) == 2) {
 
         par(mfrow = c(1, 2))
         # Plot the means for each group at positions 0, 1, ..., J-1.
-        plot(c(0:(J - 1)), c(mean(x$X[treat == 0, i]), rep(2, J - 1)),
-             pch = 16, cex = 1.5, ylim = c(0, 1),
+        plot(c(0:(J - 1)), c(mean(x$X[[i]][treat == 0]), rep(2, J - 1)),
+             pch = 16, cex = 1.5, ylim = range(x$X[[i]]),
              ylab = "Mean of group", xlab = "Treatment group",
-             col = 1, main = paste0("Unweighted; variable: ", names[i]),
+             col = 1, main = paste0("Unweighted\n", names[i]),
              xaxt = "n",
              xlim = c(-0.5, J - 1 + 0.5))
         axis(side = 1, at = 0:(J - 1), labels = paste(0:(J - 1)))
-        abline(h = mean(x$X[, i]), lty = 2)
+        abline(h = mean(x$X[[i]]), lty = 2)
 
         for (j in 1:(J - 1)) {
-          points(j, mean(x$X[treat == j, i]), pch = 16,
+          points(j, mean(x$X[[i]][treat == j]), pch = 16,
                  cex = 1.5, col = j + 1)
         }
 
         #Now for the weighted means.
         plot(c(0:(J - 1)),
-             c(sum(x$X[treat == 0, i] * weights.mat[1, treat == 0]),
+             c(sum(x$X[[i]][treat == 0] * weights.mat[1, treat == 0]),
              rep(2, J - 1)), pch = 16, cex = 1.5,
-             ylim = c(0, 1), ylab = "Mean of group",
+             ylim = range(x$X[[i]]), ylab = "Mean of group",
              xlab = "Treatment group", col = 1,
-             main = paste0("Weighted; variable: ", names[i]),
+             main = paste0("Weighted\n", names[i]),
              xaxt = "n", xlim = c(-0.5, J - 1 + 0.5))
         axis(side = 1, at = 0:(J - 1), labels = paste(0:(J - 1)))
-        abline(h = mean(x$X[, i]), lty = 2)
+        abline(h = mean(x$X[[i]]), lty = 2)
         for (j in 1:(x$J - 1)) {
-          points(j, sum(x$X[treat == j, i] * weights.mat[j + 1, treat == j]),
+          points(j, sum(x$X[[i]][treat == j] * weights.mat[j + 1, treat == j]),
                  pch = 16, cex = 1.5, col = j + 1)
         }
 
       } else {  # The case of continuous variables.
         # The Set-up is virtually unchaged.
-        my.range <- range(x$X[, i])
-        my.seq <- seq(my.range[1], my.range[2], length = 100)
+        # my.range <- range(x$X[[i]])
+        # my.seq <- seq(my.range[1], my.range[2], length = 100)
+        my.seq <- sort(unique(x$X[[i]]))
 
-        ecdf.placebo <- sapply(my.seq, weighted.ecdf, x = x$X[x$treat == 0, i])
+        ecdf.placebo <- sapply(my.seq, weighted.ecdf, x = x$X[[i]][x$treat == 0])
         par(mfrow = c(1, 2))
-        plot(my.seq, ecdf.placebo, cex = 0.4, pch = 16, type = "l",
+        plot(my.seq, ecdf.placebo, cex = 0.4, pch = 16, type = "s",
              lty = 1, col = 1, xlab = names[i],
-             ylab = "emperical CDF", main = "Unweighted emperical CDF")
+             ylab = "Empirical CDF", main = "Unweighted Empirical CDF")
 
         # A for loop to cycle through all the others
         for (j in 1:(J - 1)) {
-          ecdf.treat.j <- sapply(my.seq, weighted.ecdf, x = x$X[treat == j, i])
+          ecdf.treat.j <- sapply(my.seq, weighted.ecdf, x = x$X[[i]][treat == j])
           lines(my.seq, ecdf.treat.j, cex = 0.4, pch = 16,
-                lty = j + 1, col = j + 1)
+                type = "s", lty = j + 1, col = j + 1)
         }
         legend("bottomright", paste("gp", 0:(x$J - 1)),
                lty = 1:J, col = 1:J)
 
         weighted.ecdf.placebo <- sapply(my.seq, weighted.ecdf,
-                               x = x$X[treat == 0, i],
+                               x = x$X[[i]][treat == 0],
                                weights = weights.mat[1, treat == 0])
         plot(my.seq, weighted.ecdf.placebo, cex = 0.4, pch = 16,
-             type = "l", lty = 1, col = 1,
-             xlab = names[i], ylab = "emperical CDF",
-             main = "Weighted emperical CDF")
+             type = "s", lty = 1, col = 1,
+             xlab = names[i], ylab = "Empirical CDF",
+             main = "Weighted Empirical CDF")
         for (j in 1:(J - 1)) {
           w.ecdf.treat.j <- sapply(my.seq, weighted.ecdf,
-                                   x = x$X[treat == j, i],
+                                   x = x$X[[i]][treat == j],
                                    weights = weights.mat[j + 1, treat == j])
           lines(my.seq, w.ecdf.treat.j, cex = 0.4,
-                pch = 16, lty = j + 1, col = j + 1)
+                type = "s", pch = 16, lty = j + 1, col = j + 1)
         }
       }
     }
